@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../services/authService';
 
 function Login() {
@@ -19,7 +19,7 @@ function Login() {
       localStorage.setItem('user', JSON.stringify(response.user));
       navigate('/admin');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login gagal');
+      setError(err.response?.data?.message || 'Login gagal. Periksa username dan password.');
     } finally {
       setLoading(false);
     }
@@ -28,20 +28,34 @@ function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2>Login Admin</h2>
-        <p>Sistem Informasi Manager Activity - InPro</p>
+        <Link to="/" title="Kembali ke Beranda">
+          <img
+            src="/Logo_Kota_Medan_(Seal_of_Medan).svg"
+            alt="Logo Kota Medan"
+            className="login-logo"
+          />
+        </Link>
+        <h2>Admin Portal</h2>
+        <p>Masuk untuk mengelola surat dan pegawai</p>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && (
+          <div className="alert alert-error">
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Username</label>
             <input
               type="text"
+              placeholder="Masukkan username anda"
               value={credentials.username}
               onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
               required
               disabled={loading}
+              autoFocus
             />
           </div>
 
@@ -49,6 +63,7 @@ function Login() {
             <label>Password</label>
             <input
               type="password"
+              placeholder="••••••••"
               value={credentials.password}
               onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
               required
@@ -57,7 +72,7 @@ function Login() {
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Loading...' : 'Login'}
+            {loading ? 'Memproses...' : 'Masuk Dashboard'}
           </button>
         </form>
       </div>

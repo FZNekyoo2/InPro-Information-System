@@ -18,7 +18,7 @@ function TrackingSurat() {
 
   const fetchTotalTahapan = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/tahapan');
+      const response = await fetch('http://localhost:3001/api/tahapan');
       const tahapan = await response.json();
       setTotalTahapanAktif(tahapan.length);
     } catch (err) {
@@ -55,7 +55,7 @@ function TrackingSurat() {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'selesai': return '#10b981';
       case 'proses': return '#f59e0b';
       case 'draft': return '#6b7280';
@@ -72,21 +72,23 @@ function TrackingSurat() {
 
   return (
     <div className="tracking-page">
-      <div className="tracking-header">
-        <div className="tracking-header-content">
-          <Link to="/" className="back-link">← Kembali ke Home</Link>
-          <h1>🔍 Tracking Surat</h1>
-          <p>Lacak status dan proses dokumen surat Anda secara real-time</p>
+      <header className="tracking-header">
+        <div className="branding">
+          <Link to="/">
+            <img src="/Logo_Kota_Medan_(Seal_of_Medan).svg" alt="Logo" />
+          </Link>
+          <h1>Tracking Layanan Surat</h1>
         </div>
-      </div>
+        <Link to="/" className="btn btn-sm btn-secondary">← Kembali</Link>
+      </header>
 
       <div className="tracking-container">
         <div className="tracking-search-card">
           <h2>🔍 Scan QR Code</h2>
           <p className="search-hint">Gunakan <strong>QR Scanner</strong> untuk melacak status dokumen dengan mudah dan cepat</p>
-          
-          <button 
-            className="btn btn-scan-qr" 
+
+          <button
+            className="btn btn-scan-qr"
             onClick={() => setShowScanner(!showScanner)}
             style={{ fontSize: '1.1rem', padding: '1.25rem' }}
           >
@@ -104,7 +106,7 @@ function TrackingSurat() {
                 type="text"
                 placeholder="Contoh: ZT-ABC123"
                 value={nomorSurat}
-                onChange={(e) => setNomorSurat(e.target.value.toUpperCase())}
+                onChange={(e) => setNomorSurat(e.target.value)}
                 disabled={loading}
                 className="search-input"
               />
@@ -120,7 +122,7 @@ function TrackingSurat() {
         </div>
 
         {showScanner && (
-          <QRScanner 
+          <QRScanner
             onScanSuccess={handleScanSuccess}
             onClose={() => setShowScanner(false)}
           />
@@ -143,7 +145,7 @@ function TrackingSurat() {
                   {trackingData.status}
                 </span>
               </div>
-              
+
               <div className="info-grid">
                 <div className="info-item">
                   <span className="info-label">Kode Unik</span>
@@ -187,8 +189,8 @@ function TrackingSurat() {
                   <span className="progress-percentage">{Math.round(getProgressPercentage())}%</span>
                 </div>
                 <div className="progress-bar">
-                  <div 
-                    className="progress-fill" 
+                  <div
+                    className="progress-fill"
                     style={{ width: `${getProgressPercentage()}%` }}
                   ></div>
                 </div>
@@ -199,16 +201,16 @@ function TrackingSurat() {
             <div className="tracking-timeline-card">
               <h3>📊 Timeline Proses</h3>
               <p className="timeline-subtitle">Riwayat lengkap perjalanan dokumen surat</p>
-              
+
               <div className="timeline">
                 {trackingData.tracking.map((item, index) => {
                   // Tentukan status: jika bukan tracking terakhir, berarti sudah selesai
                   const isLastItem = index === trackingData.tracking.length - 1;
                   const displayStatus = isLastItem ? 'proses' : 'selesai';
-                  
+
                   return (
-                    <div 
-                      key={item.id} 
+                    <div
+                      key={item.id}
                       className={`timeline-item ${displayStatus === 'selesai' ? 'completed' : 'in-progress'}`}
                     >
                       <div className="timeline-marker">
@@ -246,9 +248,9 @@ function TrackingSurat() {
                         ) : (
                           <span className="meta-item waiting">⏸️ Belum diproses</span>
                         )}
+                        </div>
                       </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
@@ -262,9 +264,9 @@ function TrackingSurat() {
                   <h4>Dokumen Surat Tersedia</h4>
                   <p>Dokumen surat sudah dapat diunduh</p>
                 </div>
-                <a 
-                  href={`${import.meta.env.VITE_API_URL}/${trackingData.file_path}`} 
-                  download 
+                <a
+                  href={`${import.meta.env.VITE_API_URL}/${trackingData.file_path}`}
+                  download
                   className="btn btn-primary"
                 >
                   📥 Download Surat

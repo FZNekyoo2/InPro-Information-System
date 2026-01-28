@@ -75,9 +75,9 @@ function ManageSurat() {
   return (
     <div className="manage-container">
       <h1>Kelola Surat</h1>
-      
-      <button 
-        className="btn btn-primary" 
+
+      <button
+        className="btn btn-primary"
         onClick={() => setShowForm(!showForm)}
       >
         {showForm ? 'Tutup Form' : '+ Tambah Surat'}
@@ -86,14 +86,14 @@ function ManageSurat() {
       {showForm && (
         <form onSubmit={handleSubmit} className="form-card">
           <h3>Tambah Surat Baru</h3>
-          
+
           <div className="form-grid">
             <div className="form-group">
               <label>Nomor Surat</label>
               <input
                 type="text"
                 value={currentSurat.nomor_surat}
-                onChange={(e) => setCurrentSurat({...currentSurat, nomor_surat: e.target.value})}
+                onChange={(e) => setCurrentSurat({ ...currentSurat, nomor_surat: e.target.value })}
                 required
               />
             </div>
@@ -102,7 +102,7 @@ function ManageSurat() {
               <label>Jenis Surat</label>
               <select
                 value={currentSurat.jenis_surat}
-                onChange={(e) => setCurrentSurat({...currentSurat, jenis_surat: e.target.value})}
+                onChange={(e) => setCurrentSurat({ ...currentSurat, jenis_surat: e.target.value })}
                 required
               >
                 <option value="">Pilih Jenis</option>
@@ -118,7 +118,7 @@ function ManageSurat() {
               <input
                 type="text"
                 value={currentSurat.pengirim}
-                onChange={(e) => setCurrentSurat({...currentSurat, pengirim: e.target.value})}
+                onChange={(e) => setCurrentSurat({ ...currentSurat, pengirim: e.target.value })}
                 required
               />
             </div>
@@ -128,7 +128,7 @@ function ManageSurat() {
               <input
                 type="text"
                 value={currentSurat.penerima}
-                onChange={(e) => setCurrentSurat({...currentSurat, penerima: e.target.value})}
+                onChange={(e) => setCurrentSurat({ ...currentSurat, penerima: e.target.value })}
                 required
               />
             </div>
@@ -137,7 +137,7 @@ function ManageSurat() {
               <label>Perihal</label>
               <textarea
                 value={currentSurat.perihal}
-                onChange={(e) => setCurrentSurat({...currentSurat, perihal: e.target.value})}
+                onChange={(e) => setCurrentSurat({ ...currentSurat, perihal: e.target.value })}
                 required
                 rows="3"
               />
@@ -148,7 +148,7 @@ function ManageSurat() {
               <input
                 type="date"
                 value={currentSurat.tanggal_surat}
-                onChange={(e) => setCurrentSurat({...currentSurat, tanggal_surat: e.target.value})}
+                onChange={(e) => setCurrentSurat({ ...currentSurat, tanggal_surat: e.target.value })}
                 required
               />
             </div>
@@ -190,8 +190,8 @@ function ManageSurat() {
                 <td><span className="badge">{surat.status}</span></td>
                 <td>
                   {surat.qr_code && (
-                    <a href={`http://localhost:3000${surat.qr_code}`} target="_blank" rel="noopener noreferrer">
-                      <img src={`http://localhost:3000${surat.qr_code}`} alt="QR" width="50" />
+                    <a href={`http://localhost:3001${surat.qr_code}`} target="_blank" rel="noopener noreferrer">
+                      <img src={`http://localhost:3001${surat.qr_code}`} alt="QR" width="50" />
                     </a>
                   )}
                 </td>

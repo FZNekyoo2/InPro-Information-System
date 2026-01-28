@@ -4,13 +4,15 @@ import {
   getPegawaiById,
   createPegawai,
   updatePegawai,
-  deletePegawai
+  deletePegawai,
+  getPegawaiByNip
 } from '../controllers/pegawaiController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.get('/', getAllPegawai);
+router.get('/nip/:nip', getPegawaiByNip);
 router.get('/:id', getPegawaiById);
 router.post('/', authenticate, createPegawai);
 router.put('/:id', authenticate, updatePegawai);

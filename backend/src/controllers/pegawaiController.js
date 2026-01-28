@@ -99,3 +99,31 @@ export const deletePegawai = async (req, res) => {
     res.status(500).json({ message: 'Terjadi kesalahan server' });
   }
 };
+
+export const getPegawaiByNip = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        id, nama, nip, pangkat, golongan, jabatan, unit_kerja, 
+        tanggal_lahir,
+        TIMESTAMPDIFF(YEAR, tanggal_lahir, CURDATE()) as usia,
+        DATE_ADD(tanggal_lahir, INTERVAL 60 YEAR) as tanggal_pensiun,
+        created_at
+      FROM pegawai 
+      WHERE nip = ?
+    `, [req.params.nip]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Pegawai tidak ditemukan' });
+    }
+
+    const pegawai = rows[0];
+    // Calculate retirement status
+    pegawai.is_retired = pegawai.usia >= 60;
+
+    res.json(pegawai);
+  } catch (error) {
+    console.error('Error fetching pegawai by NIP:', error);
+    res.status(500).json({ message: 'Terjadi kesalahan server' });
+  }
+};

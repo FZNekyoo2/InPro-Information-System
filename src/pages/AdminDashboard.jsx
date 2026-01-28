@@ -49,7 +49,7 @@ function AdminDashboard() {
   const [editingTahapan, setEditingTahapan] = useState(null);
   const navigate = useNavigate();
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 }}));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   useEffect(() => { fetchTahapan(); }, []);
   useEffect(() => { if (Object.keys(columns).length > 0) fetchData(); }, [Object.keys(columns).length]);
@@ -57,7 +57,7 @@ function AdminDashboard() {
   const fetchTahapan = async () => {
     try {
       // Ambil SEMUA tahapan (termasuk yang nonaktif) untuk ditampilkan di modal
-      const response = await fetch('http://localhost:3000/api/tahapan?all=true');
+      const response = await fetch('http://localhost:3001/api/tahapan?all=true');
       const tahapan = await response.json();
       setTahapanList(tahapan);
       const newColumns = {};
@@ -73,11 +73,11 @@ function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const suratResponse = await fetch('http://localhost:3000/api/surat');
+      const suratResponse = await fetch('http://localhost:3001/api/surat');
       const suratData = await suratResponse.json();
       const suratWithTracking = await Promise.all(suratData.map(async (surat) => {
         try {
-          const trackingResponse = await fetch(`http://localhost:3000/api/tracking/surat/${surat.id}`);
+          const trackingResponse = await fetch(`http://localhost:3001/api/tracking/surat/${surat.id}`);
           const tracking = await trackingResponse.json();
           let currentStage = Object.keys(columns)[0] || 'pendaftaran';
           if (tracking.length > 0) {
@@ -98,7 +98,7 @@ function AdminDashboard() {
       Object.keys(newColumns).forEach(key => { newColumns[key].cards = []; });
       suratWithTracking.forEach(surat => { if (newColumns[surat.currentStage]) newColumns[surat.currentStage].cards.push(surat); });
       setColumns(newColumns);
-      const statsResponse = await fetch('http://localhost:3000/api/dashboard/stats');
+      const statsResponse = await fetch('http://localhost:3001/api/dashboard/stats');
       setStats(await statsResponse.json());
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -131,7 +131,7 @@ function AdminDashboard() {
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const isSelesai = targetOrder === Math.max(...Object.values(columns).map(c => c.urutan));
-      const response = await fetch('http://localhost:3000/api/tracking', {
+      const response = await fetch('http://localhost:3001/api/tracking', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -154,7 +154,7 @@ function AdminDashboard() {
     setSelectedSurat(card);
     setShowDetailModal(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/surat/${card.id}/comments`);
+      const response = await fetch(`http://localhost:3001/api/surat/${card.id}/comments`);
       if (response.ok) setComments(await response.json());
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -167,7 +167,7 @@ function AdminDashboard() {
     try {
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const response = await fetch(`http://localhost:3000/api/surat/${selectedSurat.id}/comments`, {
+      const response = await fetch(`http://localhost:3001/api/surat/${selectedSurat.id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ comment: newComment, username: user.username || 'Admin' })
@@ -187,7 +187,7 @@ function AdminDashboard() {
     try {
       const formData = new FormData();
       formData.append('attachment', attachmentFile);
-      const response = await fetch(`http://localhost:3000/api/surat/${selectedSurat.id}/attachment`, {
+      const response = await fetch(`http://localhost:3001/api/surat/${selectedSurat.id}/attachment`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: formData
@@ -207,7 +207,7 @@ function AdminDashboard() {
     e.preventDefault();
     if (!newTahapan.nama.trim()) return;
     try {
-      const response = await fetch('http://localhost:3000/api/tahapan', {
+      const response = await fetch('http://localhost:3001/api/tahapan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify(newTahapan)
@@ -226,18 +226,18 @@ function AdminDashboard() {
 
   const handleToggleTahapan = async (tahapan) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/tahapan/${tahapan.id}`, {
+      const response = await fetch(`http://localhost:3001/api/tahapan/${tahapan.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify({ ...tahapan, aktif: !tahapan.aktif })
       });
       if (response.ok) {
         // Update langsung di state tahapanList untuk tampilan di modal
-        const updatedList = tahapanList.map(t => 
+        const updatedList = tahapanList.map(t =>
           t.id === tahapan.id ? { ...t, aktif: !t.aktif } : t
         );
         setTahapanList(updatedList);
-        
+
         // Fetch ulang tahapan dan data untuk rebuild kanban board dengan benar
         await fetchTahapan();
       }
@@ -250,9 +250,9 @@ function AdminDashboard() {
   const handleEditTahapan = async (e) => {
     e.preventDefault();
     if (!editingTahapan.nama.trim()) return;
-    
+
     try {
-      const response = await fetch(`http://localhost:3000/api/tahapan/${editingTahapan.id}`, {
+      const response = await fetch(`http://localhost:3001/api/tahapan/${editingTahapan.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify(editingTahapan)
@@ -270,9 +270,9 @@ function AdminDashboard() {
 
   const handleDeleteTahapan = async (id, nama) => {
     if (!window.confirm(`Yakin ingin menghapus tahapan "${nama}"?\n\nTahapan yang dihapus akan dinonaktifkan.`)) return;
-    
+
     try {
-      const response = await fetch(`http://localhost:3000/api/tahapan/${id}`, {
+      const response = await fetch(`http://localhost:3001/api/tahapan/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
@@ -292,13 +292,13 @@ function AdminDashboard() {
   const handleMoveUrutan = async (tahapan, direction) => {
     const currentIndex = tahapanList.findIndex(t => t.id === tahapan.id);
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    
+
     if (targetIndex < 0 || targetIndex >= tahapanList.length) return;
-    
+
     const targetTahapan = tahapanList[targetIndex];
-    
+
     try {
-      const response = await fetch('http://localhost:3000/api/tahapan/urutan', {
+      const response = await fetch('http://localhost:3001/api/tahapan/urutan', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: JSON.stringify({
@@ -308,7 +308,7 @@ function AdminDashboard() {
           ]
         })
       });
-      
+
       if (response.ok) {
         await fetchTahapan();
       }
@@ -325,11 +325,14 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="admin-dashboard kanban-view">
+    <div className="admin-dashboard dashboard-container kanban-view">
       <header className="dashboard-header">
-        <div>
-          <h1>📊 Dashboard Admin - InPro</h1>
-          <p className="dashboard-subtitle">Sistem Manajemen Surat Kanban Board</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <img src="/Logo_Kota_Medan_(Seal_of_Medan).svg" alt="Logo" className="header-logo" style={{ width: '64px' }} />
+          <div>
+            <h1 style={{ marginBottom: '0.25rem', fontSize: '2.25rem' }}>Dashboard Setup</h1>
+            <p className="dashboard-subtitle" style={{ margin: 0, fontSize: '1.1rem' }}>Sistem Informasi Manajemen Aktivitas</p>
+          </div>
         </div>
         <div className="header-actions">
           <div className="stats-mini">
@@ -340,7 +343,7 @@ function AdminDashboard() {
         </div>
       </header>
 
-      <div className="quick-menu">
+      <div className="quick-menu" style={{ gap: '1.5rem', paddingBottom: '1.5rem' }}>
         <Link to="/admin/surat" className="quick-btn">📄 Kelola Surat</Link>
         <Link to="/admin/pegawai" className="quick-btn">👥 Kelola Pegawai</Link>
         <Link to="/admin/template" className="quick-btn">📋 Template</Link>
@@ -393,13 +396,13 @@ function AdminDashboard() {
               <div>
                 <h2>📄 {selectedSurat.perihal}</h2>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                  <a 
-                    href={`http://localhost:3000${selectedSurat.qr_code}`} 
-                    target="_blank" 
+                  <a
+                    href={`http://localhost:3001${selectedSurat.qr_code}`}
+                    target="_blank"
                     rel="noopener noreferrer"
-                    style={{ 
-                      fontSize: '1.2rem', 
-                      fontWeight: 'bold', 
+                    style={{
+                      fontSize: '1.2rem',
+                      fontWeight: 'bold',
                       color: '#2563eb',
                       textDecoration: 'none',
                       padding: '0.5rem 1rem',
@@ -440,7 +443,7 @@ function AdminDashboard() {
                 <h3>📎 Attachment</h3>
                 {selectedSurat.file_path ? (
                   <div className="attachment-item">
-                    <a href={`http://localhost:3000${selectedSurat.file_path}`} target="_blank" rel="noopener noreferrer">📄 Lihat Dokumen Surat</a>
+                    <a href={`http://localhost:3001${selectedSurat.file_path}`} target="_blank" rel="noopener noreferrer">📄 Lihat Dokumen Surat</a>
                   </div>
                 ) : <p className="no-data">Belum ada attachment</p>}
                 <form onSubmit={handleUploadAttachment} className="upload-form">
@@ -496,68 +499,67 @@ function AdminDashboard() {
                 <div className="tahapan-list">
                   {tahapanList.map((tahapan, index) => (
                     editingTahapan?.id === tahapan.id ? (
-                      <form key={tahapan.id} onSubmit={handleEditTahapan} className="tahapan-item editing">
-                        <div className="tahapan-edit-form">
-                          <input 
-                            type="text" 
-                            value={editingTahapan.nama} 
-                            onChange={(e) => setEditingTahapan({...editingTahapan, nama: e.target.value})}
+                      <form key={tahapan.id} onSubmit={handleEditTahapan} className="tahapan-item editing" style={{ borderColor: tahapan.color }}>
+                        <div className="tahapan-edit-form" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <input
+                            type="text"
+                            value={editingTahapan.nama}
+                            onChange={(e) => setEditingTahapan({ ...editingTahapan, nama: e.target.value })}
                             placeholder="Nama tahapan"
-                            style={{ flex: 1, padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #ccc' }}
                           />
-                          <input 
-                            type="color" 
-                            value={editingTahapan.color} 
-                            onChange={(e) => setEditingTahapan({...editingTahapan, color: e.target.value})}
-                            style={{ width: '50px', height: '40px', cursor: 'pointer' }}
-                          />
-                          <button type="submit" className="btn-sm btn-primary">💾 Simpan</button>
-                          <button type="button" className="btn-sm btn-secondary" onClick={() => setEditingTahapan(null)}>✕</button>
+                          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <input
+                              type="color"
+                              value={editingTahapan.color}
+                              onChange={(e) => setEditingTahapan({ ...editingTahapan, color: e.target.value })}
+                              style={{ width: '50px', height: '40px', padding: '0 0.2rem' }}
+                            />
+                            <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
+                              <button type="submit" className="btn-sm btn-primary" style={{ flex: 1 }}>💾 Simpan</button>
+                              <button type="button" className="btn-sm btn-secondary" onClick={() => setEditingTahapan(null)}>Batal</button>
+                            </div>
+                          </div>
                         </div>
                       </form>
                     ) : (
                       <div key={tahapan.id} className={`tahapan-item ${!tahapan.aktif ? 'tahapan-nonaktif' : ''}`}>
+                        {/* Dynamic colored border via inline style for pseudo-element simulation if needed, or direct border-left */}
+                        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', backgroundColor: tahapan.color }}></div>
+
                         <div className="tahapan-info">
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginRight: '0.5rem' }}>
-                            <button 
-                              className="btn-sm btn-urutan"
-                              onClick={() => handleMoveUrutan(tahapan, 'up')}
-                              disabled={index === 0}
-                              title="Pindah ke atas"
-                              style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', opacity: index === 0 ? 0.3 : 1 }}
-                            >
-                              ▲
-                            </button>
-                            <button 
-                              className="btn-sm btn-urutan"
-                              onClick={() => handleMoveUrutan(tahapan, 'down')}
-                              disabled={index === tahapanList.length - 1}
-                              title="Pindah ke bawah"
-                              style={{ padding: '0.1rem 0.4rem', fontSize: '0.7rem', opacity: index === tahapanList.length - 1 ? 0.3 : 1 }}
-                            >
-                              ▼
-                            </button>
-                          </div>
                           <span className="tahapan-order">#{tahapan.urutan}</span>
-                          <span className="tahapan-color-dot" style={{ backgroundColor: tahapan.color }}></span>
-                          <strong>{tahapan.nama}</strong>
-                          {!tahapan.aktif && <span className="badge-nonaktif">Nonaktif</span>}
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <strong style={{ fontSize: '1.05rem' }}>{tahapan.nama}</strong>
+                            {!tahapan.aktif && <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>● Nonaktif</span>}
+                          </div>
                         </div>
+
                         <div className="tahapan-actions">
-                          <button 
-                            className="btn-sm btn-edit" 
+                          <div style={{ marginRight: 'auto', display: 'flex', gap: '0.25rem' }}>
+                            <button className="btn-sm btn-secondary" onClick={() => handleMoveUrutan(tahapan, 'up')} disabled={index === 0}>▲</button>
+                            <button className="btn-sm btn-secondary" onClick={() => handleMoveUrutan(tahapan, 'down')} disabled={index === tahapanList.length - 1}>▼</button>
+                          </div>
+
+                          <button
+                            className="btn-sm btn-edit"
                             onClick={() => setEditingTahapan(tahapan)}
-                            title="Edit tahapan"
+                            title="Edit"
+                            style={{ background: '#eff6ff', color: '#2563eb', border: 'none' }}
                           >
                             ✏️
                           </button>
-                          <button className={`btn-toggle ${tahapan.aktif ? 'active' : 'inactive'}`} onClick={() => handleToggleTahapan(tahapan)}>
-                            {tahapan.aktif ? '✓ Aktif' : '✗ Nonaktif'}
+                          <button
+                            className={`btn-sm ${tahapan.aktif ? 'btn-secondary' : 'btn-primary'}`}
+                            onClick={() => handleToggleTahapan(tahapan)}
+                            title={tahapan.aktif ? "Nonaktifkan" : "Aktifkan"}
+                          >
+                            {tahapan.aktif ? '✅' : '🚫'}
                           </button>
-                          <button 
-                            className="btn-sm btn-delete" 
+                          <button
+                            className="btn-sm btn-delete"
                             onClick={() => handleDeleteTahapan(tahapan.id, tahapan.nama)}
-                            title="Hapus tahapan"
+                            title="Hapus"
+                            style={{ background: '#fef2f2', color: '#ef4444', border: 'none' }}
                           >
                             🗑️
                           </button>

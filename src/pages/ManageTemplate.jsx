@@ -29,7 +29,7 @@ function ManageTemplate() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/template');
+      const response = await fetch('http://localhost:3001/api/template');
       const data = await response.json();
       setTemplates(data);
     } catch (error) {
@@ -50,12 +50,12 @@ function ManageTemplate() {
         formDataToSend.append('file', formData.file);
       }
 
-      const url = editingTemplate 
-        ? `http://localhost:3000/api/template/${editingTemplate.id}`
-        : 'http://localhost:3000/api/template';
-      
+      const url = editingTemplate
+        ? `http://localhost:3001/api/template/${editingTemplate.id}`
+        : 'http://localhost:3001/api/template';
+
       const method = editingTemplate ? 'PUT' : 'POST';
-      
+
       const token = localStorage.getItem('token');
       const response = await fetch(url, {
         method,
@@ -98,7 +98,7 @@ function ManageTemplate() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/template/${id}`, {
+      const response = await fetch(`http://localhost:3001/api/template/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -124,11 +124,11 @@ function ManageTemplate() {
   };
 
   return (
-    <div className="admin-page">
-      <div className="admin-header">
+    <div className="manage-container">
+      <div className="dashboard-header" style={{ marginBottom: '2rem', borderBottom: 'none' }}>
         <div>
-          <Link to="/admin" className="back-link">← Dashboard</Link>
-          <h1>📝 Manage Template Surat</h1>
+          <Link to="/admin" className="back-link" style={{ color: 'var(--gray-600)', background: 'none', padding: 0 }}>← Dashboard</Link>
+          <h1 style={{ marginTop: '0.5rem' }}>📝 Manage Template Surat</h1>
           <p>Kelola template dokumen surat</p>
         </div>
         <button className="btn btn-primary" onClick={openModal}>
@@ -136,7 +136,7 @@ function ManageTemplate() {
         </button>
       </div>
 
-      <div className="admin-content">
+      <div className="manage-content">
         <div className="table-container">
           <table>
             <thead>
@@ -165,8 +165,8 @@ function ManageTemplate() {
                     <td>{template.deskripsi}</td>
                     <td>
                       {template.file_path && (
-                        <a 
-                          href={`http://localhost:3000${template.file_path}`} 
+                        <a
+                          href={`http://localhost:3001${template.file_path}`}
                           download
                           className="btn-link"
                         >
@@ -176,13 +176,13 @@ function ManageTemplate() {
                     </td>
                     <td>
                       <div className="action-buttons">
-                        <button 
+                        <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => handleEdit(template)}
                         >
                           ✏️ Edit
                         </button>
-                        <button 
+                        <button
                           className="btn btn-danger btn-sm"
                           onClick={() => handleDelete(template.id)}
                         >
@@ -199,11 +199,11 @@ function ManageTemplate() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="modal-overlay-surat" onClick={() => setShowModal(false)}>
+          <div className="modal-content-surat" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-surat">
               <h2>{editingTemplate ? '✏️ Edit Template' : '➕ Tambah Template Baru'}</h2>
-              <button className="close-btn" onClick={() => setShowModal(false)}>✕</button>
+              <button className="close-btn-surat" onClick={() => setShowModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -254,16 +254,16 @@ function ManageTemplate() {
               </div>
 
               <div className="modal-footer">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowModal(false)}
                   disabled={loading}
                 >
                   Batal
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={loading}
                 >

@@ -1,5 +1,6 @@
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import ImageModule from 'docxtemplater-image-module-free';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,14 +13,40 @@ export const generateSuratDocument = (templatePath, data, outputFilename) => {
         // Read the template
         const content = fs.readFileSync(templatePath, 'binary');
 
+        // Image Module Option
+        const opts = {};
+        opts.centered = false; // Set to true to always center images
+        opts.fileType = "docx";
+
+        // Pass your image loader
+        opts.getImage = function (tagValue, tagName) {
+            // tagValue is the value of the tag in the data object (e.g., /path/to/image.png)
+            // We expect tagValue to be an absolute file path
+            if (!tagValue) return null;
+            return fs.readFileSync(tagValue);
+        };
+
+        opts.getSize = function (img, tagValue, tagName) {
+            // You can return [width, height]
+            // Fixed size for QR Code: 150x150
+            return [150, 150];
+        };
+
+        const imageModule = new ImageModule(opts);
+
         const zip = new PizZip(content);
         const doc = new Docxtemplater(zip, {
             paragraphLoop: true,
             linebreaks: true,
+            modules: [imageModule]
         });
 
         // Translate/Format data for template
         // Ensure all fields are strings or empty strings to avoid errors
+        const formattedTanggalSurat = data.tanggal_surat ? new Date(data.tanggal_surat).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        }) : '';
+
         const templateData = {
             nomor_surat: data.nomor_surat || '',
             kepala_opd: data.kepala_opd || '',
@@ -31,10 +58,9 @@ export const generateSuratDocument = (templatePath, data, outputFilename) => {
             opd_new: data.opd_new || '',
             pengirim: data.pengirim || '',
             penerima: data.penerima || '',
-            tanggal_surat: data.tanggal_surat ? new Date(data.tanggal_surat).toLocaleDateString('id-ID', {
-                day: 'numeric', month: 'long', year: 'numeric'
-            }) : '',
-            qr_code: data.qr_code_path || '' // TODO: Handle image insertion if needed later
+            tanggal_surat: formattedTanggalSurat,
+            tanggal_opd: formattedTanggalSurat, // Default tanggal_opd to tanggal_surat
+            qr_code: data.qr_code_path || null // Pass absolute path or null
         };
 
         doc.render(templateData);

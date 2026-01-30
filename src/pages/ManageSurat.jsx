@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getAllSurat, createSurat, updateSurat, deleteSurat } from '../services/suratService';
 import { getAllPegawai } from '../services/api';
 
@@ -9,11 +9,13 @@ function ManageSurat() {
   const [suratList, setSuratList] = useState([]);
   const [pegawaiList, setPegawaiList] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [currentSurat, setCurrentSurat] = useState({
     nomor_surat: '',
     jenis_surat: 'Surat Pidana',
-    pengirim: '',
-    penerima: '',
+    pengirim: '-',
+    penerima: '-',
     tanggal_surat: '',
     kepala_opd: '',
     no_pdna: '',
@@ -47,23 +49,33 @@ function ManageSurat() {
     }
   };
 
+  const handleSelectPegawai = (pegawai) => {
+    setSearchTerm(`${pegawai.nip} - ${pegawai.nama}`);
+    setCurrentSurat(prev => ({
+      ...prev,
+      nip: pegawai.nip,
+      nama_pegawai: pegawai.nama,
+      pangkat: pegawai.pangkat,
+      jabatan: pegawai.jabatan,
+      opd_new: pegawai.instansi || pegawai.opd_new
+    }));
+    setShowDropdown(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       let response;
       if (currentSurat.id) {
         response = await updateSurat(currentSurat.id, currentSurat);
-        // Note: Update logic might need similar handling if we add regeneration there
       } else {
         response = await createSurat(currentSurat);
         
-        // Check if file_path is returned and download it
         if (response && response.file_path) {
             const downloadUrl = `${BASE_URL}${response.file_path}`;
-            // Create a temporary link to trigger download
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.setAttribute('download', ''); // Force download
+            link.setAttribute('download', '');
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -92,8 +104,8 @@ function ManageSurat() {
       jabatan: surat.jabatan || '',
       opd_new: surat.opd_new || ''
     });
+    setSearchTerm(`${surat.nip} - ${surat.nama_pegawai || ''}`);
     setShowForm(true);
-    // Scroll to top to see form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -112,8 +124,8 @@ function ManageSurat() {
     setCurrentSurat({
       nomor_surat: '',
       jenis_surat: 'Surat Pidana',
-      pengirim: '',
-      penerima: '',
+      pengirim: '-',
+      penerima: '-',
       tanggal_surat: '',
       kepala_opd: '',
       no_pdna: '',
@@ -123,7 +135,54 @@ function ManageSurat() {
       jabatan: '',
       opd_new: ''
     });
+    setSearchTerm('');
+    setShowDropdown(false);
     setShowForm(false);
+  };
+
+  // Calculate filtered results outside JSX for easier access
+  const filteredPegawai = pegawaiList.filter(p => 
+      p.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      p.nip.includes(searchTerm)
+  );
+
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const listRef = useRef(null);
+
+  // Reset highlight when search changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchTerm]);
+
+  // Auto-scroll to highlighted item
+  useEffect(() => {
+    if (highlightedIndex >= 0 && listRef.current) {
+      const highlightedItem = listRef.current.children[highlightedIndex];
+      if (highlightedItem) {
+        highlightedItem.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex]);
+
+  const handleKeyDown = (e) => {
+    if (!showDropdown || filteredPegawai.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex(prev => 
+        prev < filteredPegawai.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (highlightedIndex >= 0 && filteredPegawai[highlightedIndex]) {
+        handleSelectPegawai(filteredPegawai[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
   };
 
   return (
@@ -153,39 +212,7 @@ function ManageSurat() {
             </div>
 
             <div className="form-group">
-              <label>Jenis Surat</label>
-              <input
-                type="text"
-                value="Surat Pidana"
-                disabled
-                className="bg-gray-100" // Optional styling if using tailwind or similar, otherwise just disabled is enough
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Pengirim</label>
-              <input
-                type="text"
-                value={currentSurat.pengirim}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, pengirim: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Penerima</label>
-              <input
-                type="text"
-                value={currentSurat.penerima}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, penerima: e.target.value })}
-                required
-              />
-            </div>
-
-
-
-            <div className="form-group">
-              <label>Tanggal Surat</label>
+              <label>Tanggal OPD</label>
               <input
                 type="date"
                 value={currentSurat.tanggal_surat}
@@ -195,12 +222,9 @@ function ManageSurat() {
             </div>
           </div>
 
-          <h3 style={{ marginTop: '1.5rem', marginBottom: '1rem', borderTop: '1px dashed #e5e7eb', paddingTop: '1rem' }}>
-            Detail Penanda Tangan
-          </h3>
-
-          <div className="form-grid">
-            <div className="form-group">
+            {/* 2 Columns Row - Removed Nama Pegawai */}
+          <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: '1rem' }}>
+             <div className="form-group">
               <label>Kepala OPD</label>
               <input
                 type="text"
@@ -218,54 +242,104 @@ function ManageSurat() {
                 onChange={(e) => setCurrentSurat({ ...currentSurat, no_pdna: e.target.value })}
               />
             </div>
+          </div>
 
-            <div className="form-group">
-              <label>Nama Pegawai</label>
+          <h3 style={{ marginTop: '1.5rem', marginBottom: '1rem', borderTop: '1px dashed #e5e7eb', paddingTop: '1rem' }}>
+            Data Pegawai
+          </h3>
+
+          <div className="form-group">
+            <label>Cari NIP / Nama Pegawai</label>
+            <div className="search-container" style={{ position: 'relative' }}>
               <input
                 type="text"
-                value={currentSurat.nama_pegawai}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, nama_pegawai: e.target.value })}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowDropdown(true);
+                  if (e.target.value === '') {
+                    setShowDropdown(false);
+                  }
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Ketik NIP atau Nama..."
+                className="form-control"
               />
-            </div>
-
-            <div className="form-group">
-              <label>NIP</label>
-              <input
-                type="text"
-                value={currentSurat.nip}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, nip: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Pangkat</label>
-              <input
-                type="text"
-                value={currentSurat.pangkat}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, pangkat: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Jabatan</label>
-              <input
-                type="text"
-                value={currentSurat.jabatan}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, jabatan: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>OPD New</label>
-              <input
-                type="text"
-                value={currentSurat.opd_new}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, opd_new: e.target.value })}
-              />
+              
+              {showDropdown && searchTerm && (
+                <ul 
+                  ref={listRef}
+                  className="dropdown-results" 
+                  style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  background: 'white',
+                  zIndex: 1000,
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}>
+                  {filteredPegawai.map((p, index) => (
+                      <li 
+                        key={p.id}
+                        onClick={() => handleSelectPegawai(p)}
+                        style={{
+                          padding: '10px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #f3f4f6',
+                          background: index === highlightedIndex ? '#eff6ff' : 'white',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = '#f9fafb';
+                          setHighlightedIndex(index);
+                        }}
+                        onMouseLeave={(e) => {
+                          if (index !== highlightedIndex) e.target.style.background = 'white';
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold' }}>{p.nama}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>NIP: {p.nip}</div>
+                      </li>
+                    ))
+                  }
+                  {filteredPegawai.length === 0 && (
+                     <li style={{ padding: '10px', color: '#9ca3af', fontStyle: 'italic' }}>Tidak ditemukan</li>
+                  )}
+                </ul>
+              )}
             </div>
           </div>
 
-          <div className="form-actions">
+          {/* Read-Only Details Auto-filled */}
+          {currentSurat.nama_pegawai && (
+              <div className="form-grid" style={{ marginTop: '1rem', background: '#f9fafb', padding: '10px', borderRadius: '8px' }}>
+                   <div className="form-group">
+                      <label style={{ fontSize: '0.8rem', color: '#6b7280' }}>Nama Pegawai</label>
+                      <div style={{ fontWeight: 500 }}>{currentSurat.nama_pegawai || '-'}</div>
+                  </div>
+                  <div className="form-group">
+                      <label style={{ fontSize: '0.8rem', color: '#6b7280' }}>Pangkat</label>
+                      <div>{currentSurat.pangkat || '-'}</div>
+                  </div>
+                   <div className="form-group">
+                      <label style={{ fontSize: '0.8rem', color: '#6b7280' }}>Jabatan</label>
+                      <div>{currentSurat.jabatan || '-'}</div>
+                  </div>
+                   <div className="form-group">
+                      <label style={{ fontSize: '0.8rem', color: '#6b7280' }}>Instansi</label>
+                      <div>{currentSurat.opd_new || '-'}</div>
+                  </div>
+              </div>
+          )}
+
+          <div className="form-actions" style={{ marginTop: '2rem' }}>
             <button type="submit" className="btn btn-primary">
               Simpan
             </button>
@@ -281,11 +355,14 @@ function ManageSurat() {
           <thead>
             <tr>
               <th>Nomor Surat</th>
+              <th>Nama Pegawai</th>
+              <th>NIP</th>
               <th>Kode Unik</th>
               <th>Jenis</th>
-              <th>Tanggal</th>
+              <th>Tanggal Surat Masuk</th>
               <th>Status</th>
               <th>QR Code</th>
+              <th>Dokumen</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -293,24 +370,42 @@ function ManageSurat() {
             {suratList.map((surat) => (
               <tr key={surat.id}>
                 <td>{surat.nomor_surat}</td>
+                <td>{surat.nama_pegawai || '-'}</td>
+                <td>{surat.nip || '-'}</td>
                 <td><strong style={{ color: '#2563eb' }}>{surat.kode_unik}</strong></td>
                 <td>{surat.jenis_surat}</td>
-                <td>{new Date(surat.tanggal_surat).toLocaleDateString('id-ID')}</td>
+                <td>{surat.created_at ? new Date(surat.created_at).toLocaleDateString('id-ID') : '-'}</td>
                 <td><span className="badge">{surat.status}</span></td>
                 <td>
                   {surat.qr_code && (
-                    <a href={`${BASE_URL}${surat.qr_code}`} target="_blank" rel="noopener noreferrer">
-                      <img src={`${BASE_URL}${surat.qr_code}`} alt="QR" width="50" />
-                    </a>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                      <a href={`${BASE_URL}${surat.qr_code}`} target="_blank" rel="noopener noreferrer">
+                        <img src={`${BASE_URL}${surat.qr_code}`} alt="QR" width="50" />
+                      </a>
+                      <a href={`${BASE_URL}${surat.qr_code}`} download className="btn-link">
+                        Unduh
+                      </a>
+                    </div>
                   )}
                 </td>
                 <td>
-                  <button onClick={() => handleEdit(surat)} className="btn-sm btn-edit" style={{ marginRight: '0.5rem', backgroundColor: '#eab308' }}>
-                    Edit
-                  </button>
-                  <button onClick={() => handleDelete(surat.id)} className="btn-sm btn-delete">
-                    Hapus
-                  </button>
+                   {surat.file_path ? (
+                      <a href={`${BASE_URL}${surat.file_path}`} download className="btn-download" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', backgroundColor: '#e0f2fe', color: '#0369a1', padding: '6px 10px', borderRadius: '4px', border: '1px solid #bae6fd', fontSize: '0.85rem' }}>
+                         📄 Word
+                      </a>
+                   ) : (
+                      <span style={{ color: '#9ca3af', fontStyle: 'italic', fontSize: '0.8rem' }}>-</span>
+                   )}
+                </td>
+                <td>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button onClick={() => handleEdit(surat)} className="btn-sm btn-edit" style={{ backgroundColor: '#eab308', color: 'white', border: 'none' }}>
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(surat.id)} className="btn-sm btn-delete">
+                        Hapus
+                      </button>
+                    </div>
                 </td>
               </tr>
             ))}

@@ -45,8 +45,9 @@ function TrackingSurat() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (nomorSurat.trim()) {
-      handleTrack(nomorSurat);
+    const trimmedNomor = nomorSurat.trim();
+    if (trimmedNomor) {
+      handleTrack(trimmedNomor);
     }
   };
 
@@ -164,9 +165,9 @@ function TrackingSurat() {
                   <span className="info-value">{trackingData.jenis_surat}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">Tanggal Surat</span>
+                  <span className="info-label">Tanggal Surat Masuk</span>
                   <span className="info-value">
-                    {new Date(trackingData.tanggal_surat).toLocaleDateString('id-ID', {
+                    {new Date(trackingData.created_at).toLocaleDateString('id-ID', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
@@ -175,12 +176,12 @@ function TrackingSurat() {
                   </span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">Pengirim</span>
-                  <span className="info-value">{trackingData.pengirim}</span>
+                  <span className="info-label">Nama Pegawai</span>
+                  <span className="info-value">{trackingData.nama_pegawai || '-'}</span>
                 </div>
-                <div className="info-item full-width">
-                  <span className="info-label">Perihal</span>
-                  <span className="info-value">{trackingData.perihal}</span>
+                <div className="info-item">
+                  <span className="info-label">NIP</span>
+                  <span className="info-value">{trackingData.nip || '-'}</span>
                 </div>
               </div>
 
@@ -258,23 +259,7 @@ function TrackingSurat() {
               </div>
             </div>
 
-            {/* Download Section */}
-            {trackingData.file_path && (
-              <div className="download-card">
-                <div className="download-icon">📄</div>
-                <div className="download-info">
-                  <h4>Dokumen Surat Tersedia</h4>
-                  <p>Dokumen surat sudah dapat diunduh</p>
-                </div>
-                <a
-                  href={`${API_URL.replace('/api', '')}${trackingData.file_path}`}
-                  download
-                  className="btn btn-primary"
-                >
-                  📥 Download Surat
-                </a>
-              </div>
-            )}
+
           </div>
         )}
       </div>

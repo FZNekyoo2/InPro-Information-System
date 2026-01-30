@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { getAllPegawai, createPegawai, updatePegawai, deletePegawai } from '../services/api';
 
+const GOLONGAN_OPTIONS = [
+  'I/a', 'I/b', 'I/c', 'I/d',
+  'II/a', 'II/b', 'II/c', 'II/d',
+  'III/a', 'III/b', 'III/c', 'III/d',
+  'IV/a', 'IV/b', 'IV/c', 'IV/d', 'IV/e'
+];
+
 function ManagePegawai() {
   const [pegawaiList, setPegawaiList] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentPegawai, setCurrentPegawai] = useState({
     nama: '', nip: '', pangkat: '', golongan: '', 
-    jabatan: '', unit_kerja: '', tanggal_lahir: '', status: 'aktif'
+    jabatan: '', unit_kerja: '', instansi: '', tanggal_lahir: '', status: 'aktif'
   });
 
   useEffect(() => {
@@ -58,7 +65,7 @@ function ManagePegawai() {
   const resetForm = () => {
     setCurrentPegawai({
       nama: '', nip: '', pangkat: '', golongan: '', 
-      jabatan: '', unit_kerja: '', tanggal_lahir: '', status: 'aktif'
+      jabatan: '', unit_kerja: '', instansi: '', tanggal_lahir: '', status: 'aktif'
     });
     setEditMode(false);
     setShowForm(false);
@@ -112,12 +119,16 @@ function ManagePegawai() {
 
             <div className="form-group">
               <label>Golongan</label>
-              <input
-                type="text"
+              <select
                 value={currentPegawai.golongan}
                 onChange={(e) => setCurrentPegawai({...currentPegawai, golongan: e.target.value})}
                 required
-              />
+              >
+                <option value="">Pilih Golongan</option>
+                {GOLONGAN_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">
@@ -137,6 +148,17 @@ function ManagePegawai() {
                 value={currentPegawai.unit_kerja}
                 onChange={(e) => setCurrentPegawai({...currentPegawai, unit_kerja: e.target.value})}
                 required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Instansi</label>
+              <input
+                type="text"
+                value={currentPegawai.instansi}
+                onChange={(e) => setCurrentPegawai({...currentPegawai, instansi: e.target.value})}
+                required
+                placeholder="Contoh: Pemerintah Provinsi Jawa Tengah"
               />
             </div>
 
@@ -179,11 +201,13 @@ function ManagePegawai() {
         <table>
           <thead>
             <tr>
-              <th>Nama</th>
+              <th className="col-nama">Nama</th>
               <th>NIP</th>
-              <th>Pangkat/Gol</th>
+              <th>Pangkat</th>
+              <th>Golongan</th>
               <th>Jabatan</th>
               <th>Unit Kerja</th>
+              <th>Instansi</th>
               <th>Status</th>
               <th>Usia</th>
               <th>Aksi</th>
@@ -192,11 +216,13 @@ function ManagePegawai() {
           <tbody>
             {pegawaiList.map((pegawai) => (
               <tr key={pegawai.id}>
-                <td>{pegawai.nama}</td>
+                <td className="col-nama">{pegawai.nama}</td>
                 <td>{pegawai.nip}</td>
-                <td>{pegawai.pangkat} / {pegawai.golongan}</td>
+                <td>{pegawai.pangkat}</td>
+                <td>{pegawai.golongan}</td>
                 <td>{pegawai.jabatan}</td>
                 <td>{pegawai.unit_kerja}</td>
+                <td>{pegawai.instansi}</td>
                 <td>
                   <span className={`status-badge status-${pegawai.status}`}>
                     {pegawai.status}

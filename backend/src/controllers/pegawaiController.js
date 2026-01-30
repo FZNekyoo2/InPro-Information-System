@@ -4,7 +4,7 @@ export const getAllPegawai = async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
-        id, nama, nip, pangkat, golongan, jabatan, unit_kerja, 
+        id, nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, 
         tanggal_lahir, status,
         TIMESTAMPDIFF(YEAR, tanggal_lahir, CURDATE()) as usia,
         DATE_ADD(tanggal_lahir, INTERVAL 60 YEAR) as tanggal_pensiun,
@@ -23,7 +23,7 @@ export const getPegawaiById = async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
-        id, nama, nip, pangkat, golongan, jabatan, unit_kerja, 
+        id, nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, 
         tanggal_lahir, status,
         TIMESTAMPDIFF(YEAR, tanggal_lahir, CURDATE()) as usia,
         DATE_ADD(tanggal_lahir, INTERVAL 60 YEAR) as tanggal_pensiun,
@@ -45,12 +45,12 @@ export const getPegawaiById = async (req, res) => {
 
 export const createPegawai = async (req, res) => {
   try {
-    const { nama, nip, pangkat, golongan, jabatan, unit_kerja, tanggal_lahir, status } = req.body;
+    const { nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, tanggal_lahir, status } = req.body;
 
     const [result] = await pool.query(
-      `INSERT INTO pegawai (nama, nip, pangkat, golongan, jabatan, unit_kerja, tanggal_lahir, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nama, nip, pangkat, golongan, jabatan, unit_kerja, tanggal_lahir, status || 'aktif']
+      `INSERT INTO pegawai (nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, tanggal_lahir, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, tanggal_lahir, status || 'aktif']
     );
 
     res.status(201).json({
@@ -65,13 +65,13 @@ export const createPegawai = async (req, res) => {
 
 export const updatePegawai = async (req, res) => {
   try {
-    const { nama, nip, pangkat, golongan, jabatan, unit_kerja, tanggal_lahir, status } = req.body;
+    const { nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, tanggal_lahir, status } = req.body;
 
     const [result] = await pool.query(
       `UPDATE pegawai 
-       SET nama = ?, nip = ?, pangkat = ?, golongan = ?, jabatan = ?, unit_kerja = ?, tanggal_lahir = ?, status = ?
+       SET nama = ?, nip = ?, pangkat = ?, golongan = ?, jabatan = ?, unit_kerja = ?, instansi = ?, tanggal_lahir = ?, status = ?
        WHERE id = ?`,
-      [nama, nip, pangkat, golongan, jabatan, unit_kerja, tanggal_lahir, status, req.params.id]
+      [nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, tanggal_lahir, status, req.params.id]
     );
 
     if (result.affectedRows === 0) {
@@ -104,7 +104,7 @@ export const getPegawaiByNip = async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
-        id, nama, nip, pangkat, golongan, jabatan, unit_kerja, 
+        id, nama, nip, pangkat, golongan, jabatan, unit_kerja, instansi, 
         tanggal_lahir, status,
         TIMESTAMPDIFF(YEAR, tanggal_lahir, CURDATE()) as usia,
         DATE_ADD(tanggal_lahir, INTERVAL 60 YEAR) as tanggal_pensiun,
@@ -118,7 +118,7 @@ export const getPegawaiByNip = async (req, res) => {
     }
 
     const pegawai = rows[0];
-    
+
     // Status pensiun is now explicit in DB, but we can still check age as a fallback suggestion or redundant check
     // Logic: If explicitly set to 'pensiun' OR > 60 years old
     // For now we trust the DB column 'status', but maybe the frontend wants to know if they ARE of retirement age regardless of status.

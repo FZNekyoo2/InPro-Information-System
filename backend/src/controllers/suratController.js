@@ -63,32 +63,39 @@ export const createSurat = async (req, res) => {
     // --- Automatic Document Generation Start ---
     let generatedFilePath = null;
     try {
-      // 1. Get the latest template for this type
+      // 1. Get the latest template for this type OR use default
+      // Check if DB has template, otherwise look for default file
+      let templateAbsPath = null;
+
       const [templates] = await pool.query(
         'SELECT * FROM template_surat WHERE jenis = ? ORDER BY created_at DESC LIMIT 1',
         [jenis_surat]
       );
 
       if (templates.length > 0) {
-        const template = templates[0];
-        // Construct absolute path to template file
-        // template.file_path implies relative from /uploads, e.g. /uploads/templates/filename.docx
-        // We need absolute path for fs.readFileSync in the generator
-        // Assuming backend structure: src/controllers/suratController.js
-        // We need to go up from src/controllers -> src -> backend -> to root
+        // Use DB template
+        templateAbsPath = path.join(__dirname, '../../', templates[0].file_path);
+      } else {
+        // Use default template fallback
+        const defaultTemplatePath = path.join(__dirname, '../../uploads/templates/template_surat_pernyataan.docx');
+        if (fs.existsSync(defaultTemplatePath)) {
+          templateAbsPath = defaultTemplatePath;
+        }
+      }
 
-        // However, template.file_path usually stores '/uploads/...' which is relative to server root URL, 
-        // but physically it is in 'backend/uploads/...'.
-        // Let's assume template.file_path starts with /uploads/
-
-        const templateAbsPath = path.join(__dirname, '../../', template.file_path);
+      if (templateAbsPath) {
         const outputFilename = `${kodeUnik}.docx`; // Use kodeUnik as filename
+
+        // Resolve absolute path for QR Code
+        // qrCodePath is like /uploads/qrcodes/file.png
+        // We need c:\...\backend\uploads\qrcodes\file.png
+        const qrCodeAbsPath = path.join(__dirname, '../../', qrCodePath);
 
         // Prepare data object
         const docData = {
           nomor_surat, kepala_opd, no_pdna, nama_pegawai, nip, pangkat, jabatan, opd_new,
           pengirim, penerima, tanggal_surat,
-          qr_code_path: qrCodePath // Pass if needed
+          qr_code_path: qrCodeAbsPath // Pass ABSOLUTE path
         };
 
         // Generate the document
@@ -192,7 +199,7 @@ export const trackSurat = async (req, res) => {
     // Get surat info - cari berdasarkan kode unik atau nomor surat
     const [suratRows] = await pool.query(
       'SELECT * FROM surat WHERE kode_unik = ? OR nomor_surat = ?',
-      [search, search]
+      [search.trim(), search.trim()]
     );
 
     if (suratRows.length === 0) {

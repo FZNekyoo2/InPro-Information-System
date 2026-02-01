@@ -137,6 +137,10 @@ export const createSurat = async (req, res) => {
       file_path: generatedFilePath // Return the generated file path
     });
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      console.warn('Duplicate entry:', error.sqlMessage);
+      return res.status(409).json({ message: 'Nomor Surat sudah terdaftar. Gunakan Nomor Surat lain.' });
+    }
     console.error('Error creating surat:', error);
     res.status(500).json({ message: 'Terjadi kesalahan server' });
   }

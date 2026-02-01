@@ -162,7 +162,7 @@
 .dashboard-container {
   min-height: 100vh;
   padding: 2rem;
-  max-width: 1600px;
+  max-width: 98%;
   /* Wider for Kanban */
   margin: 0 auto;
 }
@@ -217,6 +217,8 @@
   border: 1px solid var(--gray-200);
   color: var(--gray-600);
   font-weight: 500;
+  font-size: 1rem;
+  font-family: inherit;
   transition: all 0.2s;
   white-space: nowrap;
   text-decoration: none;
@@ -224,6 +226,7 @@
   align-items: center;
   gap: 0.5rem;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
 }
 
 .quick-btn:hover {
@@ -248,8 +251,8 @@
 
 .kanban-column {
   background: var(--gray-100);
-  min-width: 320px;
-  width: 320px;
+  min-width: 400px;
+  width: 400px;
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -303,7 +306,7 @@
 /* Kanban Card */
 .kanban-card {
   background: white;
-  padding: 1.25rem;
+  padding: 0.75rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--gray-200);
@@ -333,7 +336,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .card-nomor {
@@ -346,11 +349,11 @@
 }
 
 .card-perihal {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--gray-800);
   margin: 0 0 0.5rem 0;
-  line-height: 1.4;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -371,7 +374,7 @@
   justify-content: space-between;
   align-items: center;
   border-top: 1px dashed var(--gray-100);
-  padding-top: 0.75rem;
+  padding-top: 0.5rem;
   font-size: 0.75rem;
 }
 
@@ -410,8 +413,8 @@
 
 .modal-content-surat {
   background: white;
-  width: 90%;
-  max-width: 800px;
+  width: 95%;
+  max-width: 1000px;
   max-height: 90vh;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-2xl);
@@ -732,18 +735,20 @@
 
 .tracking-container {
   max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
+  width: 95%;
+  margin: 0 auto;
+  padding: 1.5rem;
+  animation: fadeIn 0.5s ease-out;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   padding-bottom: 4rem;
 }
 
 /* Search Card */
 .tracking-search-card {
   background: white;
-  padding: 3rem;
+  padding: 2rem;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   text-align: center;
@@ -851,7 +856,8 @@
   color: white;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.75rem; /* Slightly smaller for better fit */
+  font-size: 0.75rem;
+  /* Slightly smaller for better fit */
   letter-spacing: 0.05em;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   display: inline-block;
@@ -860,23 +866,28 @@
 }
 
 .status-aktif {
-  background-color: var(--primary-color); /* Blue */
+  background-color: var(--primary-color);
+  /* Blue */
 }
 
 .status-nonaktif {
-  background-color: var(--gray-500); /* Gray */
+  background-color: var(--gray-500);
+  /* Gray */
 }
 
 .status-pensiun {
-  background-color: var(--gray-600); /* Darker Gray */
+  background-color: var(--gray-600);
+  /* Darker Gray */
 }
 
 .status-cuti {
-  background-color: var(--accent-color); /* Amber */
+  background-color: var(--accent-color);
+  /* Amber */
 }
 
 .status-keluar {
-  background-color: var(--danger-color); /* Red */
+  background-color: var(--danger-color);
+  /* Red */
 }
 
 /* Surat Info Card */

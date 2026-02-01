@@ -28,8 +28,7 @@ function SortableCard({ card, onCardClick }) {
         <span className="card-nomor">{card.nomor_surat}</span>
         <span className={`card-badge badge-${card.jenis_surat.toLowerCase().replace(/\s+/g, '-')}`}>{card.jenis_surat}</span>
       </div>
-      <h4 className="card-perihal">{card.perihal}</h4>
-      <p className="card-pengirim">👤 {card.pengirim}</p>
+      <h4 className="card-perihal">{card.nama_pegawai || '-'}</h4>
       <div className="card-footer">
         <span className="card-date">📅 {new Date(card.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
       </div>
@@ -59,12 +58,10 @@ function AdminDashboard() {
 
   const fetchTahapan = async () => {
     try {
-      // Ambil SEMUA tahapan (termasuk yang nonaktif) untuk ditampilkan di modal
       const response = await fetch(`${API_URL}/tahapan?all=true`);
       const tahapan = await response.json();
       setTahapanList(tahapan);
       const newColumns = {};
-      // Hanya tampilkan tahapan yang aktif di kanban board
       tahapan.filter(t => t.aktif).forEach(t => {
         newColumns[t.nama.toLowerCase().replace(/\s+/g, '-')] = { id: t.id, title: t.nama, color: t.color, urutan: t.urutan, cards: [] };
       });
@@ -97,9 +94,12 @@ function AdminDashboard() {
           return { ...surat, currentStage: Object.keys(columns)[0] || 'pendaftaran', tracking: [] };
         }
       }));
+      
       const newColumns = { ...columns };
       Object.keys(newColumns).forEach(key => { newColumns[key].cards = []; });
-      suratWithTracking.forEach(surat => { if (newColumns[surat.currentStage]) newColumns[surat.currentStage].cards.push(surat); });
+      suratWithTracking.forEach(surat => { 
+        if (newColumns[surat.currentStage]) newColumns[surat.currentStage].cards.push(surat); 
+      });
       setColumns(newColumns);
       const statsResponse = await fetch(`${API_URL}/dashboard/stats`);
       setStats(await statsResponse.json());
@@ -351,6 +351,7 @@ function AdminDashboard() {
         <Link to="/admin/pegawai" className="quick-btn">👥 Kelola Pegawai</Link>
         <Link to="/admin/template" className="quick-btn">📋 Template</Link>
         <Link to="/tracking" className="quick-btn">🔍 Tracking</Link>
+        <Link to="/admin/surat-selesai" className="quick-btn">✅ Surat Selesai</Link>
         <button onClick={() => setShowManageTahapanModal(true)} className="quick-btn">⚙️ Kelola Tahapan</button>
       </div>
 
@@ -381,8 +382,7 @@ function AdminDashboard() {
                 <span className="card-nomor">{activeCard.nomor_surat}</span>
                 <span className={`card-badge badge-${activeCard.jenis_surat.toLowerCase().replace(/\s+/g, '-')}`}>{activeCard.jenis_surat}</span>
               </div>
-              <h4 className="card-perihal">{activeCard.perihal}</h4>
-              <p className="card-pengirim">👤 {activeCard.pengirim}</p>
+              <h4 className="card-perihal">{activeCard.nama_pegawai || '-'}</h4>
               <div className="card-footer">
                 <span className="card-date">📅 {new Date(activeCard.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
               </div>
@@ -434,12 +434,11 @@ function AdminDashboard() {
             <div className="modal-body-surat">
               <div className="detail-section">
                 <h3>📋 Detail Surat</h3>
-                <div className="detail-grid">
-                  <div className="detail-item"><label>Jenis Surat:</label><span>{selectedSurat.jenis_surat}</span></div>
-                  <div className="detail-item"><label>Pengirim:</label><span>{selectedSurat.pengirim}</span></div>
-                  <div className="detail-item"><label>Penerima:</label><span>{selectedSurat.penerima}</span></div>
+                <div className="detail-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="detail-item"><label>Jenis Surat:</label><span>{selectedSurat.jenis_surat || '-'}</span></div>
                   <div className="detail-item"><label>Tanggal Surat:</label><span>{new Date(selectedSurat.tanggal_surat).toLocaleDateString('id-ID')}</span></div>
-                  <div className="detail-item full-width"><label>Perihal:</label><span>{selectedSurat.perihal}</span></div>
+                  <div className="detail-item"><label>Nama Pegawai:</label><span>{selectedSurat.nama_pegawai || '-'}</span></div>
+                  <div className="detail-item"><label>NIP:</label><span>{selectedSurat.nip || '-'}</span></div>
                 </div>
               </div>
               <div className="detail-section">

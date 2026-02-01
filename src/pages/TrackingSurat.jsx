@@ -93,7 +93,7 @@ function TrackingSurat() {
           <button
             className="btn btn-scan-qr"
             onClick={() => setShowScanner(!showScanner)}
-            style={{ fontSize: '1.1rem', padding: '1.25rem' }}
+            style={{ fontSize: '1rem', padding: '0.75rem 1rem' }}
           >
             📷 {showScanner ? 'Tutup Scanner' : 'Buka QR Scanner'}
           </button>

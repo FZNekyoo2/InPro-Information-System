@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllSurat, createSurat, updateSurat, deleteSurat } from '../services/suratService';
 import { getAllPegawai } from '../services/api';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { id } from 'date-fns/locale';
+
+registerLocale('id', id);
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
@@ -62,8 +67,15 @@ function ManageSurat() {
     setShowDropdown(false);
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ... (existing helper functions)
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     try {
       let response;
       if (currentSurat.id) {
@@ -89,7 +101,10 @@ function ManageSurat() {
       resetForm();
     } catch (error) {
       console.error('Error saving surat:', error);
-      alert('Gagal menyimpan surat');
+      const errorMsg = error.response?.data?.message || error.message || 'Gagal menyimpan surat';
+      alert(`Gagal menyimpan surat: ${errorMsg}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -213,11 +228,29 @@ function ManageSurat() {
 
             <div className="form-group">
               <label>Tanggal OPD</label>
-              <input
-                type="date"
-                value={currentSurat.tanggal_surat}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, tanggal_surat: e.target.value })}
+              <DatePicker
+                selected={currentSurat.tanggal_surat ? new Date(currentSurat.tanggal_surat) : null}
+                onChange={(date) => {
+                  if (date) {
+                     const year = date.getFullYear();
+                     const month = String(date.getMonth() + 1).padStart(2, '0');
+                     const day = String(date.getDate()).padStart(2, '0');
+                     setCurrentSurat({ ...currentSurat, tanggal_surat: `${year}-${month}-${day}` });
+                  } else {
+                     setCurrentSurat({ ...currentSurat, tanggal_surat: '' });
+                  }
+                }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="form-control"
                 required
+                wrapperClassName="date-picker-wrapper"
+                showYearDropdown
+                showMonthDropdown
+                scrollableYearDropdown
+                yearDropdownItemNumber={10}
+                todayButton="Hari Ini"
+                locale="id"
               />
             </div>
           </div>
@@ -340,8 +373,8 @@ function ManageSurat() {
           )}
 
           <div className="form-actions" style={{ marginTop: '2rem' }}>
-            <button type="submit" className="btn btn-primary">
-              Simpan
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Menyimpan...' : 'Simpan'}
             </button>
             <button type="button" onClick={resetForm} className="btn btn-secondary">
               Batal
@@ -380,10 +413,20 @@ function ManageSurat() {
                   {surat.qr_code && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
                       <a href={`${BASE_URL}${surat.qr_code}`} target="_blank" rel="noopener noreferrer">
-                        <img src={`${BASE_URL}${surat.qr_code}`} alt="QR" width="50" />
+                        <img 
+                          src={`${BASE_URL}${surat.qr_code}`} 
+                          alt="QR Card" 
+                          style={{ 
+                            height: '120px', 
+                            width: 'auto', 
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          }} 
+                        />
                       </a>
-                      <a href={`${BASE_URL}${surat.qr_code}`} download className="btn-link">
-                        Unduh
+                      <a href={`${BASE_URL}${surat.qr_code}`} download className="btn-link" style={{ fontSize: '0.8rem' }}>
+                        Unduh Kartu
                       </a>
                     </div>
                   )}

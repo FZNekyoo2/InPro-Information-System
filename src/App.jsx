@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import TrackingSurat from './pages/TrackingSurat';
 import ManagePegawai from './pages/ManagePegawai';
 import ManageSurat from './pages/ManageSurat';
+import SuratSelesai from './pages/SuratSelesai';
 import ManageTemplate from './pages/ManageTemplate';
 import EmployeeSearchPage from './pages/EmployeeSearchPage';
 import './App.css';
@@ -22,6 +23,7 @@ function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/pegawai" element={<ManagePegawai />} />
           <Route path="/admin/surat" element={<ManageSurat />} />
+          <Route path="/admin/surat-selesai" element={<SuratSelesai />} />
           <Route path="/admin/template" element={<ManageTemplate />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

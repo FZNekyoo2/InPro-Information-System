@@ -1,0 +1,107 @@
+[2026-02-01T17:34:25.165Z] CRITICAL ERROR in generateQRCode: Jimp is not a constructor
+Stack: TypeError: Jimp is not a constructor
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:41:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:5:20
+[2026-02-01T17:35:13.299Z] CRITICAL ERROR in generateQRCode: Jimp is not a constructor
+Stack: TypeError: Jimp is not a constructor
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:43:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:5:20
+[2026-02-01T17:35:33.789Z] CRITICAL ERROR in generateQRCode: Cannot use 'in' operator to search for 'data' in 400
+Stack: TypeError: Cannot use 'in' operator to search for 'data' in 400
+    at new Jimp (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\core\dist\commonjs\index.js:71:24)
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:48:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:5:20
+[2026-02-01T17:36:56.413Z] CRITICAL ERROR in generateQRCode: Jimp.loadFont is not a function
+Stack: TypeError: Jimp.loadFont is not a function
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:54:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:5:20
+[2026-02-01T17:38:18.196Z] CRITICAL ERROR in generateQRCode: Failed to load main font
+Stack: Error: Failed to load main font
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:64:22)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:5:20
+[2026-02-01T17:38:46.812Z] CRITICAL ERROR in generateQRCode: Failed to load main font
+Stack: Error: Failed to load main font
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:64:22)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:16:20
+[2026-02-01T17:42:42.286Z] CRITICAL ERROR in generateQRCode: [
+  {
+    "code": "too_small",
+    "minimum": 0,
+    "type": "number",
+    "inclusive": true,
+    "exact": false,
+    "message": "Number must be greater than or equal to 0",
+    "path": [
+      "h"
+    ]
+  }
+]
+Stack: ZodError: [
+  {
+    "code": "too_small",
+    "minimum": 0,
+    "type": "number",
+    "inclusive": true,
+    "exact": false,
+    "message": "Number must be greater than or equal to 0",
+    "path": [
+      "h"
+    ]
+  }
+]
+    at get error (C:\Users\ASUS\InPro-Information-System\backend\node_modules\zod\v3\types.cjs:45:31)
+    at ZodUnion.parse (C:\Users\ASUS\InPro-Information-System\backend\node_modules\zod\v3\types.cjs:120:22)
+    at Object.resize (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-resize\dist\commonjs\index.js:71:46)
+    at Jimp.<computed> [as resize] (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\core\dist\commonjs\index.js:94:54)
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:72:12)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:5:20
+[2026-02-01T17:43:20.568Z] CRITICAL ERROR in generateQRCode: [
+  {
+    "code": "too_small",
+    "minimum": 0,
+    "type": "number",
+    "inclusive": true,
+    "exact": false,
+    "message": "Number must be greater than or equal to 0",
+    "path": [
+      "h"
+    ]
+  }
+]
+Stack: ZodError: [
+  {
+    "code": "too_small",
+    "minimum": 0,
+    "type": "number",
+    "inclusive": true,
+    "exact": false,
+    "message": "Number must be greater than or equal to 0",
+    "path": [
+      "h"
+    ]
+  }
+]
+    at get error (C:\Users\ASUS\InPro-Information-System\backend\node_modules\zod\v3\types.cjs:45:31)
+    at ZodUnion.parse (C:\Users\ASUS\InPro-Information-System\backend\node_modules\zod\v3\types.cjs:120:22)
+    at Object.resize (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-resize\dist\commonjs\index.js:71:46)
+    at Jimp.<computed> [as resize] (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\core\dist\commonjs\index.js:94:54)
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:72:12)
+    at async createSurat (file:///C:/Users/ASUS/InPro-Information-System/backend/src/controllers/suratController.js:61:24)
+[2026-02-01T17:45:07.757Z] CRITICAL ERROR in generateQRCode: card.writeAsync is not a function
+Stack: TypeError: card.writeAsync is not a function
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:111:16)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:5:20
+[2026-02-01T17:45:59.882Z] CRITICAL ERROR in generateQRCode: card.writeAsync is not a function
+Stack: TypeError: card.writeAsync is not a function
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:111:16)
+    at async createSurat (file:///C:/Users/ASUS/InPro-Information-System/backend/src/controllers/suratController.js:61:24)
+[2026-02-01T18:18:56.150Z] CRITICAL ERROR in generateQRCode: Cannot use 'in' operator to search for 'data' in 400
+Stack: TypeError: Cannot use 'in' operator to search for 'data' in 400
+    at new Jimp (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\core\dist\commonjs\index.js:71:24)
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:52:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async createSurat (file:///C:/Users/ASUS/InPro-Information-System/backend/src/controllers/suratController.js:61:24)

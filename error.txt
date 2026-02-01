@@ -1,0 +1,44 @@
+[2026-02-01T18:15:55.529Z] CRITICAL ERROR in generateQRCode: Cannot use 'in' operator to search for 'data' in 400
+Stack: TypeError: Cannot use 'in' operator to search for 'data' in 400
+    at new Jimp (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\core\dist\commonjs\index.js:71:24)
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:52:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:7:24
+[2026-02-01T18:19:44.958Z] CRITICAL ERROR in generateQRCode: fetch failed
+Stack: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async loadBitmapFontData (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-bitmap-font.js:98:21)
+    at async loadFont (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-font.js:28:18)
+    at async Promise.all (index 3)
+    at async generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:51:41)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:7:24
+[2026-02-01T18:19:57.645Z] CRITICAL ERROR in generateQRCode: fetch failed
+Stack: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async loadBitmapFontData (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-bitmap-font.js:98:21)
+    at async loadFont (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-font.js:28:18)
+    at async Promise.all (index 3)
+    at async generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:51:41)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:7:24
+[2026-02-01T18:20:43.141Z] CRITICAL ERROR in generateQRCode: fetch failed
+Stack: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async loadBitmapFontData (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-bitmap-font.js:98:21)
+    at async loadFont (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-font.js:28:18)
+    at async Promise.all (index 3)
+    at async generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:51:41)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:7:24
+[2026-02-01T18:21:37.502Z] CRITICAL ERROR in generateQRCode: fetch failed
+Stack: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at async loadBitmapFontData (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-bitmap-font.js:98:21)
+    at async loadFont (C:\Users\ASUS\InPro-Information-System\backend\node_modules\@jimp\plugin-print\dist\commonjs\load-font.js:28:18)
+    at async generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:71:18)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:7:24
+[2026-02-01T18:22:32.293Z] CRITICAL ERROR in generateQRCode: Failed to load main font
+Stack: Error: Failed to load main font
+    at generateQRCode (file:///C:/Users/ASUS/InPro-Information-System/backend/src/utils/qrGenerator.js:106:22)
+    at async file:///C:/Users/ASUS/InPro-Information-System/backend/test_qr.js:7:24

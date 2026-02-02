@@ -1,16 +1,25 @@
 /**
- * Generate Kode Unik untuk surat dengan format ZT-XXXXXX
- * X = huruf atau angka random (A-Z, 0-9)
+ * Generate Kode Unik untuk surat dengan format ST-HHHHHHAAAA
+ * H = Huruf (A-Z)
+ * A = Angka (0-9)
  */
 export const generateKodeUnik = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = 'ZT-';
-  
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  let result = 'ST-';
+
+  // 6 Huruf
   for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * chars.length);
-    result += chars[randomIndex];
+    const randomIndex = Math.floor(Math.random() * letters.length);
+    result += letters[randomIndex];
   }
-  
+
+  // 4 Angka
+  for (let i = 0; i < 4; i++) {
+    const randomIndex = Math.floor(Math.random() * numbers.length);
+    result += numbers[randomIndex];
+  }
+
   return result;
 };
 
@@ -20,6 +29,6 @@ export const generateKodeUnik = () => {
  * @returns {boolean}
  */
 export const isValidKodeUnik = (kode) => {
-  const regex = /^ZT-[A-Z0-9]{6}$/;
+  const regex = /^ST-[A-Z]{6}\d{4}$/;
   return regex.test(kode);
 };

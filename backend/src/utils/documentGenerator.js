@@ -47,20 +47,37 @@ export const generateSuratDocument = (templatePath, data, outputFilename) => {
             day: 'numeric', month: 'long', year: 'numeric'
         }) : '';
 
+        // Parse Pangkat/Golongan
+        // Logic: If pangkat contains " / (", it's likely a combined string "Pangkat / (Golongan)"
+        // We split it so {pangkat} is just Rank and {golongan} is Class
+        let pangkat = data.pangkat || '';
+        let golongan = '';
+
+        // If Pangkat string was combined by ManageSurat (e.g. "Penata / (III/c)"), split it.
+        if (pangkat.includes(' / (')) {
+            const parts = pangkat.split(' / (');
+            if (parts.length === 2) {
+                pangkat = parts[0].trim();
+                golongan = '(' + parts[1].trim(); // Keep the formatting e.g. "(III/c)"
+            }
+        }
+
         const templateData = {
             nomor_surat: data.nomor_surat || '',
             kepala_opd: data.kepala_opd || '',
             no_pdna: data.no_pdna || '',
             nama_pegawai: data.nama_pegawai || '',
             nip: data.nip || '',
-            pangkat: data.pangkat || '',
+            pangkat: pangkat,
+            golongan: golongan,
+            pangkat_lengkap: data.pangkat || '', // Backup key
             jabatan: data.jabatan || '',
             opd_new: data.opd_new || '',
             pengirim: data.pengirim || '',
             penerima: data.penerima || '',
             tanggal_surat: formattedTanggalSurat,
-            tanggal_opd: formattedTanggalSurat, // Default tanggal_opd to tanggal_surat
-            qr_code: data.qr_code_path || null // Pass absolute path or null
+            tanggal_opd: formattedTanggalSurat,
+            qr_code: data.qr_code_path || null
         };
 
         doc.render(templateData);

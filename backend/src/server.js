@@ -1,4 +1,6 @@
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
@@ -11,7 +13,12 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import tahapanRoutes from './routes/tahapanRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
+import { fileURLToPath } from 'url';
+
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,9 +50,21 @@ app.get('/health', (req, res) => {
 app.use(errorHandler);
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+// Serve frontend static files (Production)
+const frontendPath = path.join(__dirname, '../../dist');
+if (fs.existsSync(frontendPath)) {
+  app.use(express.static(frontendPath));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+} else {
+  // 404 handler for API only if frontend not present
+  app.use((req, res) => {
+    res.status(404).json({ message: 'Route not found' });
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`🚀 InPro Backend running on port ${PORT}`);

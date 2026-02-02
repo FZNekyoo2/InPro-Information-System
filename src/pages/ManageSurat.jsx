@@ -56,11 +56,16 @@ function ManageSurat() {
 
   const handleSelectPegawai = (pegawai) => {
     setSearchTerm(`${pegawai.nip} - ${pegawai.nama}`);
+    const golValid = pegawai.golongan && pegawai.golongan !== 'undefined' && pegawai.golongan !== '-';
+    const pangkatFormatted = golValid 
+      ? `${pegawai.pangkat} / (${pegawai.golongan})`
+      : pegawai.pangkat;
+
     setCurrentSurat(prev => ({
       ...prev,
       nip: pegawai.nip,
       nama_pegawai: pegawai.nama,
-      pangkat: pegawai.pangkat,
+      pangkat: pangkatFormatted,
       jabatan: pegawai.jabatan,
       opd_new: pegawai.instansi || pegawai.opd_new
     }));
@@ -77,11 +82,17 @@ function ManageSurat() {
 
     setIsSubmitting(true);
     try {
+      // Format date to YYYY-MM-DD
+      const formattedSurat = {
+        ...currentSurat,
+        tanggal_surat: currentSurat.tanggal_surat ? new Date(currentSurat.tanggal_surat).toISOString().split('T')[0] : ''
+      };
+
       let response;
       if (currentSurat.id) {
-        response = await updateSurat(currentSurat.id, currentSurat);
+        response = await updateSurat(currentSurat.id, formattedSurat);
       } else {
-        response = await createSurat(currentSurat);
+        response = await createSurat(formattedSurat);
         
         if (response && response.file_path) {
             const downloadUrl = `${BASE_URL}${response.file_path}`;
@@ -338,7 +349,9 @@ function ManageSurat() {
                         }}
                       >
                         <div style={{ fontWeight: 'bold' }}>{p.nama}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>NIP: {p.nip}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                          NIP: {p.nip} | {p.pangkat} {p.golongan && p.golongan !== 'undefined' ? `/ (${p.golongan})` : ''}
+                        </div>
                       </li>
                     ))
                   }

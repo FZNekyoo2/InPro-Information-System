@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getAllPegawai, createPegawai, updatePegawai, deletePegawai } from '../services/api';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { id } from 'date-fns/locale';
+
+registerLocale('id', id);
 
 const GOLONGAN_OPTIONS = [
   'I/a', 'I/b', 'I/c', 'I/d',
@@ -164,11 +169,29 @@ function ManagePegawai() {
 
             <div className="form-group">
               <label>Tanggal Lahir</label>
-              <input
-                type="date"
-                value={currentPegawai.tanggal_lahir}
-                onChange={(e) => setCurrentPegawai({...currentPegawai, tanggal_lahir: e.target.value})}
+              <DatePicker
+                selected={currentPegawai.tanggal_lahir ? new Date(currentPegawai.tanggal_lahir) : null}
+                onChange={(date) => {
+                  if (date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    setCurrentPegawai({...currentPegawai, tanggal_lahir: `${year}-${month}-${day}`});
+                  } else {
+                    setCurrentPegawai({...currentPegawai, tanggal_lahir: ''});
+                  }
+                }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                className="form-control"
                 required
+                wrapperClassName="date-picker-wrapper"
+                showYearDropdown
+                showMonthDropdown
+                scrollableYearDropdown
+                yearDropdownItemNumber={100}
+                todayButton="Hari Ini"
+                locale="id"
               />
             </div>
             <div className="form-group">

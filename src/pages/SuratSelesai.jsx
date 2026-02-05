@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+// import { useAuth } from '../context/AuthContext'; // Removed
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
@@ -8,27 +9,56 @@ function SuratSelesai() {
   const [suratList, setSuratList] = useState([]);
   const [selectedSurat, setSelectedSurat] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-  const [attachmentFile, setAttachmentFile] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchSuratSelesai();
-  }, []);
-
   const fetchSuratSelesai = async () => {
     try {
       const response = await fetch(`${API_URL}/surat`);
       const data = await response.json();
       
-      // Filter clientside or change endpoint? Clientside is fine for now as per previous pattern
-      // We also need tracking info to rely on 'selesai' status if header status isn't reliable, 
-      // but usually 'status' field in surat table should be updated.
-      // Let's rely on surat.status === 'selesai' based on my previous analysis 
-      // where updateSurat updates the status field.
+      // Fetch tracking for all items to get accurate completion date
+      const suratWithTracking = await Promise.all(data.map(async (surat) => {
+        try {
+          // Only fetch tracking if we suspect it's relevant, or just fetch for all to be safe?
+          // Fetching for all is safer for consistency with dashboard.
+          const trackingResponse = await fetch(`${API_URL}/tracking/surat/${surat.id}`);
+          const tracking = await trackingResponse.json();
+          return { ...surat, tracking };
+        } catch {
+          return { ...surat, tracking: [] };
+        }
+      }));
+
+      // Filter date: Last 2 days (Today and Yesterday)
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
       
-      const completed = data.filter(s => s.status === 'selesai');
+      const completed = suratWithTracking.filter(s => {
+        // Check status 'selesai' from header OR from latest tracking
+        const isSelesaiHead = s.status === 'selesai';
+        const lastTrack = s.tracking && s.tracking.length > 0 ? s.tracking[s.tracking.length - 1] : null;
+        const isSelesaiTrack = lastTrack && lastTrack.status === 'selesai';
+
+        if (!isSelesaiHead && !isSelesaiTrack) return false;
+        
+        // Determine Finish Date
+        // Priority: tanggal_selesai (if fixed) > last tracking date > updated_at > tanggal_surat
+        let finishDateObj = null;
+        
+        if (s.tanggal_selesai) {
+             finishDateObj = new Date(s.tanggal_selesai);
+        } else if (isSelesaiTrack && lastTrack) {
+             finishDateObj = new Date(lastTrack.created_at || lastTrack.tanggal_proses);
+        } else {
+             finishDateObj = new Date(s.updated_at || s.tanggal_surat);
+        }
+
+        const finishDateOnly = new Date(finishDateObj.getFullYear(), finishDateObj.getMonth(), finishDateObj.getDate());
+        
+        // Check if finished date is today or yesterday
+        return finishDateOnly.getTime() === today.getTime() || finishDateOnly.getTime() === yesterday.getTime();
+      });
+
       setSuratList(completed);
 
     } catch (error) {
@@ -36,70 +66,40 @@ function SuratSelesai() {
     }
   };
 
-  const handleCardClick = async (surat) => {
-    setSelectedSurat(surat);
-    setShowDetailModal(true);
-    try {
-      const response = await fetch(`${API_URL}/surat/${surat.id}/comments`);
-      if (response.ok) setComments(await response.json());
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    }
-  };
+  useEffect(() => {
+    fetchSuratSelesai();
+  }, []);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+  const navigate = useNavigate();
+  // const { logout } = useAuth(); // Removed
+  // Removed logout handlers
 
-  const handleAddComment = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    try {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const response = await fetch(`${API_URL}/surat/${selectedSurat.id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ comment: newComment, username: user.username || 'Admin' })
-      });
-      if (response.ok) {
-        setComments([...comments, await response.json()]);
-        setNewComment('');
+  const filteredSuratList = suratList
+    .filter(surat => 
+      (surat.nama_pegawai && surat.nama_pegawai.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (surat.nip && surat.nip.includes(searchTerm)) ||
+      (surat.no_pdna && surat.no_pdna.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (sortOrder === 'newest') {
+        return new Date(b.tanggal_surat) - new Date(a.tanggal_surat);
+      } else if (sortOrder === 'oldest') {
+        return new Date(a.tanggal_surat) - new Date(b.tanggal_surat);
+      } else if (sortOrder === 'az') {
+        return (a.nama_pegawai || '').localeCompare(b.nama_pegawai || '');
+      } else if (sortOrder === 'za') {
+        return (b.nama_pegawai || '').localeCompare(a.nama_pegawai || '');
       }
-    } catch (error) {
-      console.error('Error adding comment:', error);
-    }
-  };
-
-  const handleUploadAttachment = async (e) => {
-    e.preventDefault();
-    if (!attachmentFile) return;
-    try {
-      const formData = new FormData();
-      formData.append('attachment', attachmentFile);
-      const response = await fetch(`${API_URL}/surat/${selectedSurat.id}/attachment`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        body: formData
-      });
-      if (response.ok) {
-        alert('Attachment berhasil diupload');
-        setAttachmentFile(null);
-        fetchSuratSelesai();
-        // Update selectedSurat file_path so UI updates immediately?
-        // setSelectedSurat(prev => ({ ...prev, file_path: ... })) - difficult without response data
-        // For now just refresh list.
-      }
-    } catch (error) {
-      console.error('Error uploading attachment:', error);
-      alert('Gagal upload attachment');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
+      return 0;
+    });
 
   return (
     <div className="dashboard-container">
+      {/* Removed ConfirmationModal */}
       <header className="dashboard-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <img src="/Logo_Kota_Medan_(Seal_of_Medan).svg" alt="Logo" className="header-logo" style={{ width: '64px' }} />
@@ -110,29 +110,53 @@ function SuratSelesai() {
         </div>
         <div className="header-actions">
            <Link to="/admin" className="btn btn-secondary">← Kembali ke Dashboard</Link>
-          <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
+           {/* Removed Logout Button */}
         </div>
       </header>
+      
+      <div className="container" style={{ marginTop: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="form-control"
+              style={{ margin: 0, width: 'auto', minWidth: '150px' }}
+            >
+              <option value="newest">📅 Terbaru</option>
+              <option value="oldest">📅 Terlama</option>
+              <option value="az">🔤 Nama (A-Z)</option>
+              <option value="za">🔤 Nama (Z-A)</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="🔍 Cari Nama / NIP / No. OPD..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="form-control"
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
+        </div>
+      </div>
 
       <div className="table-container" style={{ marginTop: '2rem' }}>
         <table>
           <thead>
             <tr>
-              <th>No</th>
+              <th>No. Urut</th>
               <th className="col-nama">Nama Pegawai</th>
               <th>NIP</th>
-              <th>Nomor Surat</th>
-              <th>Jenis Surat</th>
+              <th>No. OPD</th>
               <th>Tanggal</th>
               <th>Status</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {suratList.length === 0 ? (
-              <tr><td colSpan="8" className="no-data">Belum ada surat yang selesai.</td></tr>
+            {filteredSuratList.length === 0 ? (
+              <tr><td colSpan="8" className="no-data" style={{ textAlign: 'center', padding: '2rem' }}>Tidak ada surat ditemukan.</td></tr>
             ) : (
-              suratList.map((surat, index) => (
+              filteredSuratList.map((surat, index) => (
                 <tr key={surat.id}>
                   <td>{index + 1}</td>
                   <td className="col-nama">
@@ -141,10 +165,12 @@ function SuratSelesai() {
                   </td>
                   <td>{surat.nip || '-'}</td>
                   <td>
-                    <span className="card-nomor">{surat.nomor_surat}</span>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.95rem', color: '#374151' }}>{surat.no_pdna || '-'}</span>
                   </td>
-                  <td>{surat.jenis_surat}</td>
-                  <td>{new Date(surat.tanggal_surat).toLocaleDateString('id-ID')}</td>
+                  <td>
+                    <div>📅 Selesai: {surat.tanggal_selesai ? new Date(surat.tanggal_selesai).toLocaleDateString('id-ID') : '-'}</div>
+                    <div style={{fontSize: '0.75rem', color: '#888'}}>Surat: {new Date(surat.tanggal_surat).toLocaleDateString('id-ID')}</div>
+                  </td>
                   <td>
                     <span className="badge badge-success">Selesai</span>
                   </td>
@@ -195,7 +221,6 @@ function SuratSelesai() {
               <div className="detail-section">
                 <h3>📋 Detail Surat</h3>
                  <div className="detail-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                  <div className="detail-item"><label>Jenis Surat:</label><span>{selectedSurat.jenis_surat || '-'}</span></div>
                   <div className="detail-item"><label>Tanggal Surat:</label><span>{new Date(selectedSurat.tanggal_surat).toLocaleDateString('id-ID')}</span></div>
                   <div className="detail-item"><label>Nama Pegawai:</label><span>{selectedSurat.nama_pegawai || '-'}</span></div>
                   <div className="detail-item"><label>NIP:</label><span>{selectedSurat.nip || '-'}</span></div>

@@ -1,10 +1,34 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from '../config/database.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const logFilePath = path.join(__dirname, '../../logs/login_attempts.log');
+
+// Ensure stats/logs dir exists
+if (!fs.existsSync(path.dirname(logFilePath))) {
+  fs.mkdirSync(path.dirname(logFilePath), { recursive: true });
+}
+
+const logFailedAttempt = (username, ip, reason) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] Failed Login | User: ${username} | IP: ${ip} | Reason: ${reason}\n`;
+  try {
+    fs.appendFileSync(logFilePath, logMessage);
+  } catch (err) {
+    console.error('Error writing to log file:', err);
+  }
+};
+
 export const login = async (req, res) => {
+  console.log('Login attempt:', req.body);
   try {
     const { username, password } = req.body;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     if (!username || !password) {
       return res.status(400).json({ message: 'Username dan password harus diisi' });
@@ -17,6 +41,7 @@ export const login = async (req, res) => {
     );
 
     if (users.length === 0) {
+      logFailedAttempt(username, clientIp, 'User not found');
       return res.status(401).json({ message: 'Username atau password salah' });
     }
 
@@ -24,8 +49,9 @@ export const login = async (req, res) => {
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
-    
+
     if (!isValidPassword) {
+      logFailedAttempt(username, clientIp, 'Invalid password');
       return res.status(401).json({ message: 'Username atau password salah' });
     }
 

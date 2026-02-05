@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getAllPegawai, createPegawai, updatePegawai, deletePegawai } from '../services/api';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { id } from 'date-fns/locale';
+import AlertModal from '../components/AlertModal';
 
 registerLocale('id', id);
 
@@ -21,6 +23,7 @@ function ManagePegawai() {
     nama: '', nip: '', pangkat: '', golongan: '', 
     jabatan: '', unit_kerja: '', instansi: '', tanggal_lahir: '', status: 'aktif'
   });
+  const [alertData, setAlertData] = useState({ message: '', type: 'success' });
 
   useEffect(() => {
     fetchPegawai();
@@ -45,8 +48,10 @@ function ManagePegawai() {
       }
       fetchPegawai();
       resetForm();
+      setAlertData({ message: 'Data Berhasil Diubah', type: 'success' });
     } catch (error) {
       console.error('Error saving pegawai:', error);
+      setAlertData({ message: 'Gagal menyimpan data pegawai', type: 'error' });
     }
   };
 
@@ -61,8 +66,10 @@ function ManagePegawai() {
       try {
         await deletePegawai(id);
         fetchPegawai();
+        setAlertData({ message: 'Data Berhasil Dihapus', type: 'success' });
       } catch (error) {
         console.error('Error deleting pegawai:', error);
+        setAlertData({ message: 'Gagal menghapus data pegawai', type: 'error' });
       }
     }
   };
@@ -75,20 +82,57 @@ function ManagePegawai() {
     setEditMode(false);
     setShowForm(false);
   };
+  
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter Pegawai List
+  const filteredPegawaiList = pegawaiList.filter(pegawai => 
+    pegawai.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    pegawai.nip.includes(searchTerm)
+  );
 
   return (
     <div className="manage-container">
-      <h1>Kelola Data Pegawai</h1>
+      <AlertModal 
+        message={alertData.message} 
+        type={alertData.type} 
+        onClose={() => setAlertData({ message: '', type: 'success' })} 
+      />
       
-      <button 
-        className="btn btn-primary" 
-        onClick={() => setShowForm(!showForm)}
-      >
-        {showForm ? 'Tutup Form' : '+ Tambah Pegawai'}
-      </button>
+      <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <img src="/Logo_Kota_Medan_(Seal_of_Medan).svg" alt="Logo" className="header-logo" style={{ width: '56px' }} />
+          <div>
+            <h1 style={{ marginBottom: '0.25rem', fontSize: '1.8rem' }}>Kelola Data Pegawai</h1>
+            <p className="dashboard-subtitle" style={{ margin: 0, fontSize: '1rem', color: '#6b7280' }}>Manajemen data kepegawaian dan status</p>
+          </div>
+        </div>
+        <div className="header-actions">
+           <Link to="/admin" className="btn btn-secondary">← Kembali ke Dashboard</Link>
+        </div>
+      </header>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? 'Tutup Form' : '+ Tambah Pegawai'}
+        </button>
+
+        <input
+          type="text"
+          placeholder="🔍 Cari Nama Pegawai / NIP..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="form-control"
+          style={{ maxWidth: '300px', margin: 0 }}
+        />
+      </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="form-card">
+          {/* ... existing form content ... */}
           <h3>{editMode ? 'Edit Pegawai' : 'Tambah Pegawai Baru'}</h3>
           
           <div className="form-grid">
@@ -237,7 +281,10 @@ function ManagePegawai() {
             </tr>
           </thead>
           <tbody>
-            {pegawaiList.map((pegawai) => (
+            {filteredPegawaiList.length === 0 ? (
+               <tr><td colSpan="10" className="no-data" style={{textAlign: 'center', padding: '2rem', color: '#6b7280'}}>Tidak ada data pegawai ditemukan</td></tr>
+            ) : (
+              filteredPegawaiList.map((pegawai) => (
               <tr key={pegawai.id}>
                 <td className="col-nama">{pegawai.nama}</td>
                 <td>{pegawai.nip}</td>
@@ -261,7 +308,8 @@ function ManagePegawai() {
                   </button>
                 </td>
               </tr>
-            ))}
+            ))
+          )}
           </tbody>
         </table>
       </div>

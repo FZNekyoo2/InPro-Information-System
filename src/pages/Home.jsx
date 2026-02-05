@@ -1,6 +1,29 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
 function Home() {
+  const [settings, setSettings] = useState({
+    landing_title: 'InPro Sistem Informasi',
+    landing_subtitle: 'Platform Manajemen Aktivitas & Tracking Surat Digital Pemerintah Kota Medan'
+  });
+
+  useEffect(() => {
+    fetch(`${API_URL}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && (data.landing_title || data.landing_subtitle)) {
+          setSettings(prev => ({
+            ...prev,
+            landing_title: data.landing_title || prev.landing_title,
+            landing_subtitle: data.landing_subtitle || prev.landing_subtitle
+          }));
+        }
+      })
+      .catch(err => console.error('Error fetching settings:', err));
+  }, []);
+
   return (
     <div className="home-container">
       <div className="hero-section">
@@ -9,8 +32,8 @@ function Home() {
           alt="Logo Kota Medan"
           className="hero-logo"
         />
-        <h1>InPro Sistem Informasi</h1>
-        <p>Platform Manajemen Aktivitas & Tracking Surat Digital Pemerintah Kota Medan</p>
+        <h1>{settings.landing_title}</h1>
+        <p>{settings.landing_subtitle}</p>
 
         <div className="action-buttons">
           <Link to="/login" className="btn btn-primary">

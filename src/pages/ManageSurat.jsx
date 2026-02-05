@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { getAllSurat, createSurat, updateSurat, deleteSurat } from '../services/suratService';
 import { getAllPegawai } from '../services/api';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { id } from 'date-fns/locale';
+import AlertModal from '../components/AlertModal';
 
 registerLocale('id', id);
 
@@ -30,6 +32,7 @@ function ManageSurat() {
     jabatan: '',
     opd_new: ''
   });
+  const [alertData, setAlertData] = useState({ message: '', type: 'success' });
 
   useEffect(() => {
     fetchSurat();
@@ -91,6 +94,7 @@ function ManageSurat() {
       let response;
       if (currentSurat.id) {
         response = await updateSurat(currentSurat.id, formattedSurat);
+        setAlertData({ message: 'Data Berhasil Diubah', type: 'success' });
       } else {
         response = await createSurat(formattedSurat);
         
@@ -102,9 +106,9 @@ function ManageSurat() {
             document.body.appendChild(link);
             link.click();
             link.remove();
-            alert('Surat berhasil dibuat dan dokumen sedang diunduh!');
+            setAlertData({ message: 'Data Berhasil Disimpan dan dokumen sedang diunduh!', type: 'success' });
         } else {
-            alert('Surat berhasil dibuat!');
+            setAlertData({ message: 'Data Berhasil Disimpan!', type: 'success' });
         }
       }
       
@@ -113,7 +117,7 @@ function ManageSurat() {
     } catch (error) {
       console.error('Error saving surat:', error);
       const errorMsg = error.response?.data?.message || error.message || 'Gagal menyimpan surat';
-      alert(`Gagal menyimpan surat: ${errorMsg}`);
+      setAlertData({ message: `Gagal menyimpan surat: ${errorMsg}`, type: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -140,8 +144,10 @@ function ManageSurat() {
       try {
         await deleteSurat(id);
         fetchSurat();
+        setAlertData({ message: 'Data Berhasil Dihapus', type: 'success' });
       } catch (error) {
         console.error('Error deleting surat:', error);
+        setAlertData({ message: 'Gagal menghapus surat', type: 'error' });
       }
     }
   };
@@ -211,31 +217,90 @@ function ManageSurat() {
     }
   };
 
+  const [tableSearchTerm, setTableSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest'); // newest, oldest, az, za
+
+  // ... existing code ...
+
+  // Filter and Sort surat
+  const filteredSuratList = suratList
+    .filter(surat => 
+      (surat.nama_pegawai && surat.nama_pegawai.toLowerCase().includes(tableSearchTerm.toLowerCase())) ||
+      (surat.nip && surat.nip.includes(tableSearchTerm)) ||
+      (surat.no_pdna && surat.no_pdna.toLowerCase().includes(tableSearchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (sortOrder === 'newest') {
+        return new Date(b.created_at) - new Date(a.created_at);
+      } else if (sortOrder === 'oldest') {
+        return new Date(a.created_at) - new Date(b.created_at);
+      } else if (sortOrder === 'az') {
+        return (a.nama_pegawai || '').localeCompare(b.nama_pegawai || '');
+      } else if (sortOrder === 'za') {
+        return (b.nama_pegawai || '').localeCompare(a.nama_pegawai || '');
+      }
+      return 0;
+    });
+
   return (
     <div className="manage-container">
-      <h1>Kelola Surat</h1>
+      <AlertModal 
+        message={alertData.message} 
+        type={alertData.type} 
+        onClose={() => setAlertData({ message: '', type: 'success' })} 
+      />
+      
+      <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <img src="/Logo_Kota_Medan_(Seal_of_Medan).svg" alt="Logo" className="header-logo" style={{ width: '56px' }} />
+          <div>
+            <h1 style={{ marginBottom: '0.25rem', fontSize: '1.8rem' }}>Kelola Surat</h1>
+            <p className="dashboard-subtitle" style={{ margin: 0, fontSize: '1rem', color: '#6b7280' }}>Manajemen data surat masuk dan pencetakan</p>
+          </div>
+        </div>
+        <div className="header-actions">
+           <Link to="/admin" className="btn btn-secondary">← Kembali ke Dashboard</Link>
+        </div>
+      </header>
 
-      <button
-        className="btn btn-primary"
-        onClick={() => setShowForm(!showForm)}
-      >
-        {showForm ? 'Tutup Form' : '+ Tambah Surat'}
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <button
+          className="btn btn-primary"
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? 'Tutup Form' : '+ Tambah Surat'}
+        </button>
+
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="form-control"
+              style={{ margin: 0, width: 'auto', minWidth: '150px' }}
+            >
+              <option value="newest">📅 Terbaru</option>
+              <option value="oldest">📅 Terlama</option>
+              <option value="az">🔤 Nama (A-Z)</option>
+              <option value="za">🔤 Nama (Z-A)</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="🔍 Cari Nama / NIP / No. OPD..."
+              value={tableSearchTerm}
+              onChange={(e) => setTableSearchTerm(e.target.value)}
+              className="form-control"
+              style={{ maxWidth: '300px', margin: 0 }}
+            />
+        </div>
+      </div>
 
       {showForm && (
+        // ... (form content remains same)
         <form onSubmit={handleSubmit} className="form-card">
           <h3>{currentSurat.id ? 'Edit Surat' : 'Tambah Surat Baru'}</h3>
-
+          
           <div className="form-grid">
-            <div className="form-group">
-              <label>Nomor Surat</label>
-              <input
-                type="text"
-                value={currentSurat.nomor_surat}
-                onChange={(e) => setCurrentSurat({ ...currentSurat, nomor_surat: e.target.value })}
-                required
-              />
-            </div>
 
             <div className="form-group">
               <label>Tanggal OPD</label>
@@ -400,11 +465,11 @@ function ManageSurat() {
         <table>
           <thead>
             <tr>
-              <th>Nomor Surat</th>
+              <th>No. Urut</th>
               <th>Nama Pegawai</th>
               <th>NIP</th>
               <th>Kode Unik</th>
-              <th>Jenis</th>
+              <th>No. OPD</th>
               <th>Tanggal Surat Masuk</th>
               <th>Status</th>
               <th>QR Code</th>
@@ -413,13 +478,14 @@ function ManageSurat() {
             </tr>
           </thead>
           <tbody>
-            {suratList.map((surat) => (
+            {filteredSuratList.length > 0 ? (
+              filteredSuratList.map((surat, index) => (
               <tr key={surat.id}>
-                <td>{surat.nomor_surat}</td>
+                <td>{index + 1}</td>
                 <td>{surat.nama_pegawai || '-'}</td>
                 <td>{surat.nip || '-'}</td>
                 <td><strong style={{ color: '#2563eb' }}>{surat.kode_unik}</strong></td>
-                <td>{surat.jenis_surat}</td>
+                <td>{surat.no_pdna || '-'}</td>
                 <td>{surat.created_at ? new Date(surat.created_at).toLocaleDateString('id-ID') : '-'}</td>
                 <td><span className="badge">{surat.status}</span></td>
                 <td>
@@ -438,6 +504,9 @@ function ManageSurat() {
                           }} 
                         />
                       </a>
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                        Dibuat oleh: {surat.created_by || 'system'}
+                      </div>
                       <a href={`${BASE_URL}${surat.qr_code}`} download className="btn-link" style={{ fontSize: '0.8rem' }}>
                         Unduh Kartu
                       </a>
@@ -464,8 +533,16 @@ function ManageSurat() {
                     </div>
                 </td>
               </tr>
-            ))}
+            ))
+            ) : (
+              <tr>
+                <td colSpan="10" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                   Tidak ada surat yang ditemukan
+                </td>
+              </tr>
+            )}
           </tbody>
+  
         </table>
       </div>
     </div>

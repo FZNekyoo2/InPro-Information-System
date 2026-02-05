@@ -128,12 +128,20 @@ function ManageTemplate() {
 
   return (
     <div className="manage-container">
-      <div className="dashboard-header" style={{ marginBottom: '2rem', borderBottom: 'none' }}>
-        <div>
-          <Link to="/admin" className="back-link" style={{ color: 'var(--gray-600)', background: 'none', padding: 0 }}>← Dashboard</Link>
-          <h1 style={{ marginTop: '0.5rem' }}>📝 Manage Template Surat</h1>
-          <p>Kelola template dokumen surat</p>
+      <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', background: 'white', padding: '1rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <img src="/Logo_Kota_Medan_(Seal_of_Medan).svg" alt="Logo" className="header-logo" style={{ width: '56px' }} />
+          <div>
+            <h1 style={{ marginBottom: '0.25rem', fontSize: '1.8rem' }}>Kelola Template Surat</h1>
+            <p className="dashboard-subtitle" style={{ margin: 0, fontSize: '1rem', color: '#6b7280' }}>Kelola template dokumen surat</p>
+          </div>
         </div>
+        <div className="header-actions">
+           <Link to="/admin" className="btn btn-secondary">← Kembali ke Dashboard</Link>
+        </div>
+      </header>
+
+      <div className="dashboard-header" style={{ marginBottom: '1rem', borderBottom: 'none', justifyContent: 'flex-end', padding: 0, boxShadow: 'none' }}>
         <button className="btn btn-primary" onClick={openModal}>
           ➕ Tambah Template
         </button>

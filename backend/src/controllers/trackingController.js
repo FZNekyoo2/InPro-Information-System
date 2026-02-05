@@ -52,12 +52,12 @@ export const addTracking = async (req, res) => {
     // Update surat status
     if (status === 'selesai') {
       await pool.query(
-        'UPDATE surat SET status = ? WHERE id = ?',
+        'UPDATE surat SET status = ?, tanggal_selesai = NOW() WHERE id = ?',
         ['selesai', surat_id]
       );
     } else {
       await pool.query(
-        'UPDATE surat SET status = ? WHERE id = ?',
+        'UPDATE surat SET status = ?, tanggal_selesai = NULL WHERE id = ?',
         ['proses', surat_id]
       );
     }

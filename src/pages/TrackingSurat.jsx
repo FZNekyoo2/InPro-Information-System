@@ -107,7 +107,7 @@ function TrackingSurat() {
               <span className="search-icon">🔖</span>
               <input
                 type="text"
-                placeholder="Contoh: ZT-ABC123"
+                placeholder="Contoh: ST-ABCDEF1234"
                 value={nomorSurat}
                 onChange={(e) => setNomorSurat(e.target.value)}
                 disabled={loading}
@@ -161,8 +161,8 @@ function TrackingSurat() {
                   <span className="info-value">{trackingData.nomor_surat}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-label">Jenis Surat</span>
-                  <span className="info-value">{trackingData.jenis_surat}</span>
+                  <span className="info-label">Instansi</span>
+                  <span className="info-value">{trackingData.opd_new || '-'}</span>
                 </div>
                 <div className="info-item">
                   <span className="info-label">Tanggal Surat Masuk</span>
@@ -184,6 +184,44 @@ function TrackingSurat() {
                   <span className="info-value">{trackingData.nip || '-'}</span>
                 </div>
               </div>
+
+              {/* Completion Date Banner */}
+              {(() => {
+                const isFinished = trackingData.status === 'selesai' || (trackingData.status === 'SELESAI');
+                
+                if (isFinished) {
+                   // Priority: tanggal_selesai > last tracking date > updated_at
+                   let finishDate = trackingData.tanggal_selesai;
+                   
+                   if (!finishDate && trackingData.tracking && trackingData.tracking.length > 0) {
+                      // Find last tracking with status selesai or just the very last one
+                      const lastTrack = trackingData.tracking[trackingData.tracking.length - 1];
+                      finishDate = lastTrack.tanggal_proses || lastTrack.created_at;
+                   }
+                   
+                   if (!finishDate) {
+                      finishDate = trackingData.updated_at;
+                   }
+
+                   if (finishDate) {
+                     return (
+                        <div style={{ 
+                          textAlign: 'center', 
+                          margin: '1.5rem 0', 
+                          padding: '0.75rem', 
+                          backgroundColor: '#ecfdf5', 
+                          color: '#059669', 
+                          borderRadius: '6px', 
+                          fontWeight: '600',
+                          border: '1px solid #10b981'
+                        }}>
+                          ✅ Surat Selesai pada Tanggal: {new Date(finishDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        </div>
+                     );
+                   }
+                }
+                return null;
+              })()}
 
               {/* Progress Bar */}
               <div className="progress-section">

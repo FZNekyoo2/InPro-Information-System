@@ -8,6 +8,7 @@ import {
   trackSurat,
   uploadAttachment
 } from '../controllers/suratController.js';
+import { toggleStarSurat } from '../controllers/suratStarController.js';
 import { authenticate } from '../middleware/auth.js';
 import { uploadMiddleware } from '../middleware/upload.js';
 
@@ -20,5 +21,6 @@ router.post('/', authenticate, createSurat);
 router.put('/:id', authenticate, updateSurat);
 router.delete('/:id', authenticate, deleteSurat);
 router.post('/:id/attachment', authenticate, uploadMiddleware.single('attachment'), uploadAttachment);
+router.put('/:id/star', authenticate, toggleStarSurat);
 
 export default router;

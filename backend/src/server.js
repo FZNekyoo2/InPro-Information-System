@@ -11,6 +11,8 @@ import templateRoutes from './routes/templateRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import tahapanRoutes from './routes/tahapanRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 import { fileURLToPath } from 'url';
@@ -22,6 +24,12 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Security Middleware
+import helmet from 'helmet';
+// app.use(helmet({
+//   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin for images/assets
+// }));
 
 // Middleware
 app.use(cors());
@@ -40,6 +48,8 @@ app.use('/api/template', templateRoutes);
 app.use('/api/surat', commentRoutes); // Comment routes
 app.use('/api/tahapan', tahapanRoutes); // Tahapan routes
 app.use('/api/dashboard', dashboardRoutes); // Dashboard routes
+app.use('/api/admin', adminRoutes); // Superadmin routes
+app.use('/api/settings', settingsRoutes); // Application settings
 
 // Health check
 app.get('/health', (req, res) => {

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const BASE_URL = API_URL.replace('/api', '');
@@ -25,22 +27,50 @@ function SortableCard({ card, onCardClick }) {
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="kanban-card" onClick={() => !isDragging && onCardClick(card)}>
       <div className="card-header-info">
-        <span className="card-nomor">{card.nomor_surat}</span>
-        <span className={`card-badge badge-${card.jenis_surat.toLowerCase().replace(/\s+/g, '-')}`}>{card.jenis_surat}</span>
+        <span className="card-nomor">No. OPD: {card.no_pdna || '-'}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+          <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+            👤 {card.created_by || 'system'}
+          </div>
+        </div>
       </div>
-      <h4 className="card-perihal">{card.nama_pegawai || '-'}</h4>
-      <div className="card-footer">
+      <div style={{ marginBottom: '0.5rem' }}>
+        <h4 className="card-perihal" style={{ fontSize: '1.1rem', marginBottom: '0.2rem', fontWeight: '700' }}>{card.nama_pegawai || '-'}</h4>
+        <div style={{ fontSize: '0.85rem', color: '#4b5563', fontWeight: '600' }}>OPD: {card.kepala_opd || '-'}</div>
+      </div>
+      <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span className="card-date">📅 {new Date(card.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+        {(card.status === 'selesai' || (card.tracking && card.tracking.length > 0 && card.tracking[card.tracking.length-1].status === 'selesai')) && (() => {
+           // Find the completion date
+           // Usually the last tracking item, or specifically search for 'selesai' status
+           // If card.status is selesai, we can assume the last tracking update was the completion time or close to it.
+           // However, to be more precise, let's look for the last 'status: selesai' tracking or just use the last item.
+           const lastTrack = card.tracking && card.tracking.length > 0 ? card.tracking[card.tracking.length - 1] : null;
+           // If database doesn't have explicit 'completed_at', we use tracking timestamp
+           const completeDate = lastTrack ? new Date(lastTrack.created_at || lastTrack.tanggal_proses) : new Date(); // Fallback if missing
+           
+           return (
+             <span className="card-date-completed" style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '2px' }}>
+               ✅ {completeDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+             </span>
+           );
+        })()}
       </div>
     </div>
   );
 }
+
+
 
 function AdminDashboard() {
   const [columns, setColumns] = useState({});
   const [tahapanList, setTahapanList] = useState([]);
   const [activeCard, setActiveCard] = useState(null);
   const [stats, setStats] = useState({ totalSurat: 0, totalPegawai: 0 });
+  const [settings, setSettings] = useState({
+    dashboard_title: 'Dashboard Setup',
+    dashboard_subtitle: 'Sistem Informasi Manajemen Aktivitas'
+  });
   const [selectedSurat, setSelectedSurat] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showManageTahapanModal, setShowManageTahapanModal] = useState(false);
@@ -49,12 +79,28 @@ function AdminDashboard() {
   const [attachmentFile, setAttachmentFile] = useState(null);
   const [newTahapan, setNewTahapan] = useState({ nama: '', color: '#3b82f6' });
   const [editingTahapan, setEditingTahapan] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // New state for logout confirm
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
-  useEffect(() => { fetchTahapan(); }, []);
+  useEffect(() => { fetchTahapan(); fetchSettings(); }, []);
   useEffect(() => { if (Object.keys(columns).length > 0) fetchData(); }, [Object.keys(columns).length]);
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false);
+    navigate('/'); // Redirect to Home first
+    // Use timeout to allow navigation to complete before clearing auth state
+    // This prevents ProtectedRoute from redirecting to /login
+    setTimeout(() => {
+      logout();
+    }, 100);
+  };
 
   const fetchTahapan = async () => {
     try {
@@ -68,6 +114,22 @@ function AdminDashboard() {
       setColumns(newColumns);
     } catch (error) {
       console.error('Error fetching tahapan:', error);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch(`${API_URL}/settings`);
+      const data = await response.json();
+      if (data) {
+        setSettings(prev => ({
+          ...prev,
+          dashboard_title: data.dashboard_title || prev.dashboard_title,
+          dashboard_subtitle: data.dashboard_subtitle || prev.dashboard_subtitle
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
     }
   };
 
@@ -98,7 +160,32 @@ function AdminDashboard() {
       const newColumns = { ...columns };
       Object.keys(newColumns).forEach(key => { newColumns[key].cards = []; });
       suratWithTracking.forEach(surat => { 
-        if (newColumns[surat.currentStage]) newColumns[surat.currentStage].cards.push(surat); 
+        // Check if surat is completed and if it is "archived" (older than yesterday)
+        // If archived, do NOT show in kanban board.
+        // Logic: same as SuratSelesai.jsx but inverted. 
+        // If status == 'selesai' AND Completion Date < Yesterday, then skip.
+        
+        let shouldShow = true;
+        if (surat.status === 'selesai' || (surat.tracking && surat.tracking.length > 0 && surat.tracking[surat.tracking.length-1].status === 'selesai')) {
+           const finishDateStr = surat.tanggal_selesai || surat.updated_at || surat.tanggal_surat;
+           const finishDate = new Date(finishDateStr);
+           const now = new Date();
+           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+           const yesterday = new Date(today);
+           yesterday.setDate(yesterday.getDate() - 1);
+           
+           const finishDateOnly = new Date(finishDate.getFullYear(), finishDate.getMonth(), finishDate.getDate());
+           
+           // If finished date is BEFORE yesterday (e.g. 2 days ago), it is archived.
+           // We only show if it is Yesterday or Today.
+           if (finishDateOnly.getTime() < yesterday.getTime()) {
+             shouldShow = false;
+           }
+        }
+
+        if (shouldShow && newColumns[surat.currentStage]) {
+            newColumns[surat.currentStage].cards.push(surat); 
+        }
       });
       setColumns(newColumns);
       const statsResponse = await fetch(`${API_URL}/dashboard/stats`);
@@ -321,11 +408,6 @@ function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
 
   return (
     <div className="admin-dashboard dashboard-container kanban-view">
@@ -333,16 +415,16 @@ function AdminDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <img src="/Logo_Kota_Medan_(Seal_of_Medan).svg" alt="Logo" className="header-logo" style={{ width: '64px' }} />
           <div>
-            <h1 style={{ marginBottom: '0.25rem', fontSize: '2.25rem' }}>Dashboard Setup</h1>
-            <p className="dashboard-subtitle" style={{ margin: 0, fontSize: '1.1rem' }}>Sistem Informasi Manajemen Aktivitas</p>
+            <h1 style={{ marginBottom: '0.25rem', fontSize: '2.25rem' }}>{settings.dashboard_title}</h1>
+            <p className="dashboard-subtitle" style={{ margin: 0, fontSize: '1.1rem' }}>{settings.dashboard_subtitle}</p>
           </div>
         </div>
         <div className="header-actions">
           <div className="stats-mini">
-            <span className="stat-mini">📄 {stats.totalSurat} Surat</span>
-            <span className="stat-mini">👥 {stats.totalPegawai} Pegawai</span>
+            <span className="stat-mini">📄 {stats.suratProses || 0} Surat Aktif</span>
+            <span className="stat-mini">👥 {stats.totalPegawai || 0} Pegawai</span>
           </div>
-          <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
+          <button onClick={handleLogoutClick} className="btn btn-secondary">Logout</button>
         </div>
       </header>
 
@@ -352,6 +434,7 @@ function AdminDashboard() {
         <Link to="/admin/template" className="quick-btn">📋 Template</Link>
         <Link to="/tracking" className="quick-btn">🔍 Tracking</Link>
         <Link to="/admin/surat-selesai" className="quick-btn">✅ Surat Selesai</Link>
+        <Link to="/admin/arsip" className="quick-btn">📂 Arsip</Link>
         <button onClick={() => setShowManageTahapanModal(true)} className="quick-btn">⚙️ Kelola Tahapan</button>
       </div>
 
@@ -379,12 +462,28 @@ function AdminDashboard() {
           {activeCard && (
             <div className="kanban-card dragging">
               <div className="card-header-info">
-                <span className="card-nomor">{activeCard.nomor_surat}</span>
-                <span className={`card-badge badge-${activeCard.jenis_surat.toLowerCase().replace(/\s+/g, '-')}`}>{activeCard.jenis_surat}</span>
+                <span className="card-nomor">No. OPD: {activeCard.no_pdna || '-'}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    👤 {activeCard.created_by || 'system'}
+                  </div>
+                </div>
               </div>
-              <h4 className="card-perihal">{activeCard.nama_pegawai || '-'}</h4>
-              <div className="card-footer">
+              <div style={{ marginBottom: '0.5rem' }}>
+                <h4 className="card-perihal" style={{ fontSize: '1.1rem', marginBottom: '0.2rem', fontWeight: '700' }}>{activeCard.nama_pegawai || '-'}</h4>
+                <div style={{ fontSize: '0.85rem', color: '#4b5563', fontWeight: '600' }}>OPD: {activeCard.kepala_opd || '-'}</div>
+              </div>
+              <div className="card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className="card-date">📅 {new Date(activeCard.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                {(activeCard.status === 'selesai' || (activeCard.tracking && activeCard.tracking.length > 0 && activeCard.tracking[activeCard.tracking.length-1].status === 'selesai')) && (() => {
+                     const lastTrack = activeCard.tracking && activeCard.tracking.length > 0 ? activeCard.tracking[activeCard.tracking.length - 1] : null;
+                     const completeDate = lastTrack ? new Date(lastTrack.created_at || lastTrack.tanggal_proses) : new Date();
+                     return (
+                       <span className="card-date-completed" style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                         ✅ {completeDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                       </span>
+                     );
+                })()}
               </div>
             </div>
           )}
@@ -576,6 +675,15 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+      <ConfirmationModal
+        isOpen={showLogoutConfirm}
+        message="Apakah Anda yakin ingin keluar?"
+        onConfirm={handleConfirmLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+        confirmText="Logout"
+        cancelText="Batal"
+        type="danger"
+      />
     </div>
   );
 }

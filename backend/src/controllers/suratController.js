@@ -1,3 +1,4 @@
+import { logActivity } from '../utils/logger.js';
 import pool from '../config/database.js';
 import { generateQRCode } from '../utils/qrGenerator.js';
 import { generateKodeUnik } from '../utils/kodeUnikGenerator.js';
@@ -113,12 +114,13 @@ export const createSurat = async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO surat (
         nomor_surat, kode_unik, jenis_surat, pengirim, penerima, tanggal_surat, qr_code, status,
-        kepala_opd, no_pdna, nama_pegawai, nip, pangkat, jabatan, opd_new, file_path
+        kepala_opd, no_pdna, nama_pegawai, nip, pangkat, jabatan, opd_new, file_path, created_by
       ) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nomor_surat, kodeUnik, jenis_surat, pengirim, penerima, tanggal_surat, qrCodePath,
-        kepala_opd, no_pdna, nama_pegawai, nip, pangkat, jabatan, opd_new, generatedFilePath
+        kepala_opd, no_pdna, nama_pegawai, nip, pangkat, jabatan, opd_new, generatedFilePath,
+        req.user?.username || 'system'
       ]
     );
 
@@ -128,6 +130,11 @@ export const createSurat = async (req, res) => {
        VALUES (?, 'Tahap 1 - Pendaftaran', 'Surat telah didaftarkan', 'proses', NOW(), ?)`,
       [result.insertId, req.user?.username || 'system']
     );
+
+    // Log user activity
+    if (req.user) {
+      await logActivity(req.user.id, req.user.username, 'CREATE_SURAT', `Created surat ${nomor_surat} (${kodeUnik})`);
+    }
 
     res.status(201).json({
       message: 'Surat berhasil dibuat',
@@ -207,12 +214,14 @@ export const updateSurat = async (req, res) => {
       `UPDATE surat 
        SET nomor_surat = ?, jenis_surat = ?, pengirim = ?, penerima = ?, tanggal_surat = ?, status = ?,
            kepala_opd = ?, no_pdna = ?, nama_pegawai = ?, nip = ?, pangkat = ?, jabatan = ?, opd_new = ?,
-           file_path = COALESCE(?, file_path)
+           file_path = COALESCE(?, file_path),
+           tanggal_selesai = IF(? = 'selesai' AND status != 'selesai', NOW(), tanggal_selesai)
        WHERE id = ?`,
       [
         nomor_surat, jenis_surat, pengirim, penerima, tanggal_surat, status,
         kepala_opd, no_pdna, nama_pegawai, nip, pangkat, jabatan, opd_new,
         generatedFilePath,
+        status, // check new status
         req.params.id
       ]
     );
